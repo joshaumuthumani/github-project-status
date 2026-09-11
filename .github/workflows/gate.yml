@@ -1,0 +1,101 @@
+# Stage 10 Phase 1 gate (quality + security). Canonical shape and content from
+# review-gate.md "Installing into a new project" + the CI/security templates in
+# SDLC-Process/templates/github-workflows/. Part 3 (deploy) is intentionally absent —
+# it attaches once Stage 5 confirms the deploy target.
+#
+# This repo has no stack yet (Stage 5 pending), so the quality job no-ops on a
+# missing package.json instead of failing confusingly — same pattern as the
+# repos-site sibling repo. Remove the guard once a real package.json lands.
+name: Gate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect project
+        id: detect
+        run: |
+          if [ -f package.json ]; then
+            echo "node=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "node=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No package.json yet — skipping lint/typecheck/test/build (pre-Stage-5)."
+          fi
+
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.node == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+        if: steps.detect.outputs.node == 'true'
+
+      - name: Lint
+        if: steps.detect.outputs.node == 'true'
+        run: npm run lint
+
+      - name: Typecheck
+        if: steps.detect.outputs.node == 'true'
+        run: npx tsc --noEmit
+
+      - name: Test
+        if: steps.detect.outputs.node == 'true'
+        run: npm test -- --run
+
+      - name: Build
+        if: steps.detect.outputs.node == 'true'
+        run: npm run build
+
+  security:
+    name: Security
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # gitleaks comments on the PR when it finds a leak; without this it 403s at
+      # the moment it matters most.
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # gitleaks diffs the whole history; a shallow clone hides anything
+          # committed before the tip.
+          fetch-depth: 0
+
+      - name: Secrets scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: SAST
+        uses: semgrep/semgrep-action@v1
+        with:
+          config: >-
+            p/typescript
+            p/react
+            p/secrets
+
+      - uses: actions/setup-node@v4
+        if: hashFiles('package.json') != ''
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Dependency audit
+        if: hashFiles('package.json') != ''
+        run: npm audit --audit-level=high
+
+  # ── DEPLOY: intentionally absent. Attaches after Stage 5 when the target is known. ──

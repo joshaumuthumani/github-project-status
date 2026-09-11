@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# secrets
+.env
+.env.*
+!.env.example
+*-service-account*.json
+*.pem
+
+# build output
+dist/
+build/
+.wrangler/
+.output/
+.next/
+out/
+
+# os / editor
+.DS_Store
+.idea/
+*.swp
+
+# local scratch
+tmp/

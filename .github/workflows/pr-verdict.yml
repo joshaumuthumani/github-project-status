@@ -1,0 +1,187 @@
+name: PR Verdict
+
+# Stage 10 Phase 3. This workflow receives Phase 2's immutable evidence artifact,
+# revalidates the pull request's head SHA, and uses only the independent reviewer
+# App identity to cast a formal GitHub APPROVE review. It never runs PR code.
+#
+# No canonical Phase 3 template exists yet under SDLC-Process/templates/github-workflows/ —
+# copied unmodified from the production `ledger` repo, which project-init.md's own change log
+# names as the source these templates were reconciled from. See project-init.md § 5 for the
+# required disposable-PR proof that this workflow actually casts a formal APPROVE review.
+on:
+  workflow_run:
+    workflows: [Independent Review]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: write
+
+jobs:
+  verdict:
+    name: PR Gatekeeper verdict
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Phase 2 evidence
+        uses: actions/download-artifact@v4
+        with:
+          path: phase2-artifacts
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate frozen evidence
+        id: verdict
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const files = [];
+            const walk = (directory) => {
+              if (!fs.existsSync(directory)) return;
+              for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+                const fullPath = path.join(directory, entry.name);
+                entry.isDirectory() ? walk(fullPath) : files.push(fullPath);
+              }
+            };
+            walk('phase2-artifacts');
+            const evidencePath = files.find((file) => path.basename(file) === 'phase2-evidence.json');
+            const verdict = {
+              schemaVersion: 1,
+              phase: 'phase3',
+              collectedAt: new Date().toISOString(),
+              sourceWorkflowRun: context.payload.workflow_run.id,
+              verdict: 'block',
+              blockReasons: [],
+              approval: { status: 'not-attempted' },
+            };
+
+            let evidence;
+            if (!evidencePath) {
+              verdict.blockReasons.push('Phase 2 evidence artifact is missing.');
+            } else {
+              try {
+                evidence = JSON.parse(fs.readFileSync(evidencePath, 'utf8'));
+              } catch {
+                verdict.blockReasons.push('Phase 2 evidence artifact is malformed.');
+              }
+            }
+            if (context.payload.workflow_run.conclusion !== 'success') {
+              verdict.blockReasons.push(`Phase 2 workflow conclusion: ${context.payload.workflow_run.conclusion}.`);
+            }
+            if (evidence) {
+              verdict.pr = evidence.pr;
+              verdict.phase2EvidenceSha256 = require('crypto')
+                .createHash('sha256').update(JSON.stringify(evidence)).digest('hex');
+              if (evidence.schemaVersion !== 1 || evidence.phase1?.verdict !== 'pass' ||
+                  evidence.externalReview?.status !== 'completed' || evidence.externalReview?.verdict !== 'pass' ||
+                  evidence.verdict !== 'pass') {
+                verdict.blockReasons.push('Phase 2 evidence does not contain a complete pass.');
+              } else {
+                const { data: pr } = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: evidence.pr.number,
+                });
+                if (pr.state !== 'open') verdict.blockReasons.push(`Pull request is ${pr.state}.`);
+                if (pr.head.sha !== evidence.pr.headSha) verdict.blockReasons.push('Pull request head SHA changed after review.');
+              }
+            }
+            if (verdict.blockReasons.length === 0) verdict.verdict = 'pass';
+            fs.writeFileSync('phase3-verdict.json', `${JSON.stringify(verdict, null, 2)}\n`);
+            core.setOutput('pass', String(verdict.verdict === 'pass'));
+            core.setOutput('pr_number', String(verdict.pr?.number || 'unknown'));
+            core.setOutput('head_sha', verdict.pr?.headSha || 'unknown');
+
+      - name: Decode external-review App key
+        id: app-key
+        if: steps.verdict.outputs.pass == 'true'
+        env:
+          PRIVATE_KEY_B64: ${{ secrets.PR_EXTERNAL_REVIEW_APP_PRIVATE_KEY_B64 }}
+        run: |
+          {
+            echo 'private_key<<EOF'
+            printf '%s' "$PRIVATE_KEY_B64" | base64 --decode
+            echo
+            echo EOF
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create independent reviewer token
+        id: app-token
+        if: steps.verdict.outputs.pass == 'true'
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ vars.PR_EXTERNAL_REVIEW_APP_ID }}
+          private-key: ${{ steps.app-key.outputs.private_key }}
+
+      - name: Submit binding review
+        id: approval
+        if: steps.verdict.outputs.pass == 'true'
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ steps.verdict.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.verdict.outputs.head_sha }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
+        with:
+          github-token: ${{ steps.app-token.outputs.token }}
+          script: |
+            const fs = require('fs');
+            // The token action validates the configured App ID and private key when
+            // minting this token. Its app-slug output identifies that authenticated App.
+            if (process.env.APP_SLUG !== 'pr-external-review-bot') {
+              throw new Error(`Refusing approval from unexpected App: ${process.env.APP_SLUG}`);
+            }
+
+            const { data: review } = await github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: Number(process.env.PR_NUMBER),
+              commit_id: process.env.HEAD_SHA,
+              event: 'APPROVE',
+              body: [
+                'Stage 10 Phase 3 — PR Gatekeeper verdict: PASS.',
+                '',
+                `Frozen SHA: \`${process.env.HEAD_SHA}\``,
+                `Phase 2 workflow run: ${context.payload.workflow_run.html_url}`,
+                '',
+                'This formal approval confirms the external review evidence and unchanged reviewed SHA.',
+              ].join('\n'),
+            });
+            const actor = review.user?.login;
+            if (actor !== 'pr-external-review-bot[bot]') {
+              throw new Error(`Approval was submitted by unexpected identity: ${actor}`);
+            }
+            const verdict = JSON.parse(fs.readFileSync('phase3-verdict.json', 'utf8'));
+            verdict.approval = {
+              status: 'approved',
+              reviewId: review.id,
+              reviewUrl: review.html_url,
+              actor,
+              submittedAt: new Date().toISOString(),
+            };
+            fs.writeFileSync('phase3-verdict.json', `${JSON.stringify(verdict, null, 2)}\n`);
+
+      - name: Record approval failure
+        if: always() && steps.verdict.outputs.pass == 'true' && steps.approval.outcome != 'success'
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const verdict = JSON.parse(fs.readFileSync('phase3-verdict.json', 'utf8'));
+          verdict.approval = { status: 'failed' };
+          verdict.blockReasons.push('Formal GitHub approval was not submitted.');
+          verdict.verdict = 'block';
+          fs.writeFileSync('phase3-verdict.json', `${JSON.stringify(verdict, null, 2)}\n`);
+          NODE
+
+      - name: Upload Phase 3 verdict
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase3-verdict-${{ steps.verdict.outputs.pr_number }}-${{ steps.verdict.outputs.head_sha }}
+          path: phase3-verdict.json
+          retention-days: 14
+
+      - name: Fail closed without a binding approval
+        if: always() && (steps.verdict.outputs.pass != 'true' || steps.approval.outcome != 'success')
+        run: exit 1

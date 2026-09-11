@@ -1,0 +1,232 @@
+name: Independent Review
+
+# Stage 10 Phase 2 — the single registered external reviewer. It starts for every
+# pull-request SHA and waits for Phase 1 to pass. Per external-review-model-policy.md, this posts review
+# evidence only; it is not a GitHub approval and does not cast the Phase 3
+# verdict. See sdlc-pipeline.md § Stage 10.
+#
+# Copied from the production `ledger` repo (the source these SDLC templates were reconciled
+# from) rather than the simplified copy in SDLC-Process/templates/github-workflows/, because
+# only this version builds the phase1-evidence.json / phase2-evidence.json artifact chain that
+# pr-verdict.yml (Phase 3) consumes. The only change from ledger's copy is `requiredCheckNames`,
+# adapted to this repo's own gate.yml job names.
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      pr_url:
+        description: Pull request URL to review
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  checks: read
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  pr-agent:
+    name: PR-Agent (external)
+    runs-on: ubuntu-latest
+    env:
+      # This remains deliberately pinned; the SDLC policy forbids moving router aliases.
+      EXTERNAL_PR_MODEL: openrouter/qwen/qwen3-coder-flash
+      PR_URL: ${{ inputs.pr_url || github.event.pull_request.html_url }}
+    steps:
+      # PR-Agent reviews through GitHub's API. Checkout stays on the trusted default
+      # branch, so this workflow never checks out or executes pull-request code.
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
+      - name: Snapshot Phase 1 evidence
+        id: phase1
+        uses: actions/github-script@v7
+        env:
+          PR_URL: ${{ env.PR_URL }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+        with:
+          script: |
+            const fs = require('fs');
+            const requiredCheckNames = [
+              'Build & Test',
+              'Security',
+            ];
+            const waitUntil = Date.now() + 15 * 60 * 1000;
+            const match = process.env.PR_URL.match(/\/pull\/(\d+)\/?$/);
+            if (!match) {
+              throw new Error(`Invalid pull-request URL: ${process.env.PR_URL}`);
+            }
+
+            const pull_number = Number(match[1]);
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number,
+            });
+            let phase1Checks = [];
+            let missing = [];
+            let incomplete = [];
+            const allowedConclusions = new Set(['success', 'neutral', 'skipped']);
+            while (true) {
+              const checkRuns = await github.paginate(github.rest.checks.listForRef, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: pr.head.sha,
+                per_page: 100,
+              });
+              phase1Checks = requiredCheckNames.map((name) => checkRuns
+                .filter((check) => check.name === name)
+                .sort((a, b) => String(b.completed_at || b.started_at || '').localeCompare(String(a.completed_at || a.started_at || '')))[0])
+                .filter(Boolean);
+              missing = requiredCheckNames.filter((name) => !phase1Checks.some((check) => check.name === name));
+              incomplete = phase1Checks.filter((check) =>
+                check.status !== 'completed' || !allowedConclusions.has(check.conclusion)
+              );
+              if (missing.length === 0 && incomplete.length === 0) break;
+              if (incomplete.some((check) => check.status === 'completed')) break;
+              if (Date.now() >= waitUntil) break;
+              await new Promise((resolve) => setTimeout(resolve, 15_000));
+            }
+            const passed = missing.length === 0 && incomplete.length === 0;
+            const evidence = {
+              schemaVersion: 1,
+              phase: 'phase1',
+              collectedAt: new Date().toISOString(),
+              pr: { number: pull_number, url: pr.html_url, headSha: pr.head.sha },
+              checks: phase1Checks.map((check) => ({
+                name: check.name,
+                status: check.status,
+                conclusion: check.conclusion,
+                detailsUrl: check.details_url,
+              })),
+              verdict: passed ? 'pass' : 'block',
+              blockReasons: passed ? [] : [
+                ...missing.map((name) => `${name}: check evidence is missing.`),
+                ...incomplete.map((check) => `${check.name}: ${check.status}/${check.conclusion}`),
+              ].filter(Boolean),
+            };
+            fs.writeFileSync('phase1-evidence.json', `${JSON.stringify(evidence, null, 2)}\n`);
+            core.setOutput('pr_number', String(pull_number));
+            core.setOutput('head_sha', pr.head.sha);
+            core.setOutput('passed', String(passed));
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: pip install --quiet pr-agent==0.42.0 # pinned: this job reads the repo and posts to the PR
+
+      - name: Record review start
+        id: review-start
+        run: echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_OUTPUT"
+
+      - name: Review
+        id: review
+        if: steps.phase1.outputs.passed == 'true'
+        env:
+          OPENROUTER__KEY: ${{ secrets.OPENROUTER_PR_APPROVER_KEY }}
+          OPENROUTER__API_BASE: https://openrouter.ai/api/v1
+          CONFIG__MODEL: ${{ env.EXTERNAL_PR_MODEL }}
+          CONFIG__FALLBACK_MODELS: '[]'
+          # PR-Agent hard-fails on any model absent from its built-in MAX_TOKENS
+          # table, and this OpenRouter slug is not in it. Without this the job
+          # posts nothing — the exact silent-green this gate exists to prevent.
+          # Matches the local prr wrapper's default.
+          CONFIG__CUSTOM_MODEL_MAX_TOKENS: '1000000'
+          PR_REVIEWER__PERSISTENT_COMMENT: 'false'
+          CONFIG__GIT_PROVIDER: github
+          GITHUB__USER_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB__DEPLOYMENT_TYPE: user
+          CONFIG__PUBLISH_OUTPUT: 'true'
+        run: python -m pr_agent.cli --pr_url "$PR_URL" review
+
+      - name: Build Phase 2 evidence
+        id: phase2
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          REVIEW_STARTED_AT: ${{ steps.review-start.outputs.timestamp }}
+          REVIEW_OUTCOME: ${{ steps.review.outcome }}
+          REQUESTED_MODEL: ${{ env.EXTERNAL_PR_MODEL }}
+        with:
+          script: |
+            const crypto = require('crypto');
+            const fs = require('fs');
+            const phase1 = JSON.parse(fs.readFileSync('phase1-evidence.json', 'utf8'));
+            const evidence = {
+              schemaVersion: 1,
+              phase: 'phase2',
+              collectedAt: new Date().toISOString(),
+              pr: phase1.pr,
+              phase1,
+              externalReview: {
+                reviewer: 'PR-Agent',
+                requestedModel: process.env.REQUESTED_MODEL,
+                credentialChannel: 'pr-approver',
+                status: 'unavailable',
+                verdict: 'block',
+              },
+              verdict: 'block',
+              blockReasons: [],
+            };
+
+            if (phase1.verdict !== 'pass') {
+              evidence.blockReasons.push('Phase 1 evidence did not pass.');
+            } else if (process.env.REVIEW_OUTCOME !== 'success') {
+              evidence.blockReasons.push(`PR-Agent job outcome: ${process.env.REVIEW_OUTCOME || 'not-run'}.`);
+            } else {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: phase1.pr.number,
+                per_page: 100,
+              });
+              const startedAt = Date.parse(process.env.REVIEW_STARTED_AT);
+              const reviewComment = comments
+                .filter((comment) =>
+                  comment.user?.login === 'github-actions[bot]' &&
+                  Date.parse(comment.created_at) >= startedAt &&
+                  /PR Reviewer Guide/i.test(comment.body || '')
+                )
+                .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at))[0];
+
+              if (!reviewComment) {
+                evidence.blockReasons.push('PR-Agent completed without a published review comment.');
+              } else {
+                const body = reviewComment.body || '';
+                evidence.externalReview = {
+                  reviewer: 'PR-Agent',
+                  requestedModel: process.env.REQUESTED_MODEL,
+                  credentialChannel: 'pr-approver',
+                  status: 'completed',
+                  commentId: reviewComment.id,
+                  commentUrl: reviewComment.html_url,
+                  commentCreatedAt: reviewComment.created_at,
+                  contentSha256: crypto.createHash('sha256').update(body).digest('hex'),
+                  verdict: 'pass',
+                };
+              }
+            }
+
+            if (evidence.phase1.verdict === 'pass' && evidence.externalReview.verdict === 'pass') {
+              evidence.verdict = 'pass';
+            }
+            fs.writeFileSync('phase2-evidence.json', `${JSON.stringify(evidence, null, 2)}\n`);
+            core.setOutput('verdict', evidence.verdict);
+
+      - name: Upload Phase 2 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: phase2-evidence-${{ steps.phase1.outputs.pr_number }}-${{ steps.phase1.outputs.head_sha }}
+          path: phase2-evidence.json
+          retention-days: 14
+
+      - name: Fail closed when review evidence blocks
+        if: always() && steps.phase2.outputs.verdict != 'pass'
+        run: exit 1
+
