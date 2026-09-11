@@ -8,7 +8,7 @@ metadata file for what GitHub can't know (tags, purpose, production status).
 Idea brief: `~/Brain/Ideas/github-project-status.md`
 
 - **Tier:** load-bearing. Every pipeline stage runs; none are skipped.
-- **Stage:** 1 in progress (project init). Discovery (Stage 2) is next once Stage 1 closes out.
+- **Stage:** 1 complete (project init). Discovery (Stage 2) is next.
 
 Not FlowDesk (personal PM/planning) and not the parked `agent-dashboard` idea (general-purpose
 agent/workflow dashboard). See the idea brief's Boundaries section.
