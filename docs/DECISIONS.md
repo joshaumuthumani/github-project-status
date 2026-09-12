@@ -255,3 +255,43 @@ it exists to carry into the real build.
 **Owner:** Josh Muthumani.
 
 ---
+
+## 2026-09-12 — Stage 7 PRD amendment: in-app metadata editing adds a scoped write path (ADR-0004)
+
+**Decision:** The MVP adds an in-app UI for editing curated metadata (status/purpose/production
+tags), instead of hand-editing the JSON file and committing directly. This writes back to
+`github-project-status`'s own metadata file via the GitHub API, using a **second**, narrowly
+scoped fine-grained PAT (`contents: write`, `metadata: read`, this repository only) — distinct
+from the existing read-only portfolio-data PAT (ADR-0001), which is unchanged. Recorded as
+ADR-0004: `docs/architecture/adr/0004-in-app-metadata-editing-scoped-write.md`.
+
+**Context:** Raised as OQ-2 while drafting `docs/PRD.md` at Stage 7. Direct-git-edit was the
+Stage 3 default; Josh asked for an in-app UI instead. Since Stage 3 had explicitly decided "no
+database" and "never mutated by this app" for the metadata file (`architecture.md` §2-§4,
+discovery non-goals), this is a genuine trust-boundary change, not an implementation detail —
+handled as an ADR amendment plus updates to `architecture.md` and `threat-model.md`, rather than
+folded silently into the PRD.
+
+**Rationale:** A database/KV store was rejected (reopens the "no database" decision for no
+offsetting benefit at this write volume). Adding `contents: write` to the existing ADR-0001 PAT
+was rejected (would combine cross-portfolio read access and this-repo write access in one
+credential — worse blast radius than two separately-scoped, separately-revocable tokens). A
+second PAT scoped to this repository only keeps the ~27 portfolio repos exactly as read-only as
+before, while allowing exactly one new capability: committing to this repo's own metadata file.
+
+**Consequences:**
+- `architecture.md` §2-§4 and §8 updated: new component behavior (in-app edit → GitHub commit),
+  new trust-boundary row (second PAT, this-repo-only write), explicit statement that the
+  no-write-path invariant still holds for all ~27 portfolio repos and is the one deliberate
+  exception for this repo's own metadata file.
+- `threat-model.md` updated: new asset (metadata-write PAT), new trust-boundary row, new STRIDE
+  row (elevation of privilege via the new write path) — assessed as **Moderate**, accepted,
+  because the existing accepted bearer-token-theft risk already implied read access to the same
+  data, and the new capability is bounded to one non-sensitive file in one repo.
+- `docs/PRD.md` FR/§7 updated to describe the in-app editing flow instead of hand-edit-only.
+- Stage 9 (build) must verify the second PAT actually grants no broader write access than
+  documented, exactly as ADR-0001 required for the read-only PAT.
+
+**Owner:** Josh Muthumani.
+
+---

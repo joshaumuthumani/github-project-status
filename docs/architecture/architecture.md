@@ -9,6 +9,11 @@ no unresolved Critical/High findings.
 This is the reconciled architecture after specialist review (§9 records finding dispositions).
 The threat model lives in `threat-model.md`; consequential choices are logged as ADRs in `adr/`.
 
+**Amendment (2026-09-12, Stage 7):** ADR-0004 adds in-app curated-metadata editing, writing back
+to this repository only via a second, narrowly-scoped PAT. §2 and §4 are updated below to reflect
+it; the read-only portfolio-data PAT (ADR-0001) and the batched GraphQL read query (ADR-0003) are
+unchanged.
+
 ## 1. Requirements recap (from Stage 2)
 
 - Single user (Josh only). No multi-tenant, no user DB, no OAuth.
@@ -67,17 +72,24 @@ The threat model lives in `threat-model.md`; consequential choices are logged as
   reasons)," and "fully failed" rather than only a binary success/fail.
 - **Curated metadata:** a version-controlled file in this repository (e.g.
   `data/portfolio-metadata.json` or `.yaml`), containing the per-repo status enum, purpose, and
-  production flag. Edited by Josh directly (commit + deploy), not through an in-app UI, for MVP.
-  This is a **deploy-time-frozen** data source: an edit only takes effect after commit + deploy,
-  not live — worth naming explicitly so it is never mistaken for a live config store. Parsing is
-  **tolerant, not strict**: an unknown `status` value or one malformed repo entry degrades that
+  production flag. **Edited two ways (ADR-0004):** directly by Josh via git commit, or through an
+  in-app editing UI that commits the change back to this file via the GitHub API, using a second,
+  narrowly-scoped PAT (`contents: write`, this repository only — see below). Either path is a
+  **deploy-time-or-request-time** data source depending on the platform's read pattern (an
+  in-app-committed change takes effect on the next refresh if the backend reads the file live
+  from GitHub, or on next deploy if it reads from the deployed filesystem bundle — an
+  implementation detail for Stage 9, not decided here). Parsing is **tolerant, not strict**: an
+  unknown `status` value or one malformed repo entry degrades that
   single entry to "unannotated" rather than failing the whole page; a fully malformed/unparseable
   file fails the request closed with a clear error (silently dropping all curation data is worse
   than a visible failure for a single-user tool). A metadata entry that references a repo no
   longer visible on GitHub (renamed/deleted/transferred) is an accepted, named drift risk — low
   frequency, manually curated, not solved in MVP.
 - **GitHub:** the sole live source of operational truth (PRs, issues, activity, forks/archived
-  flags). Never mutated by this app.
+  flags) for the ~27 portfolio repos — **never mutated by this app** for any portfolio repo, no
+  exception. This app's own repository's metadata file is the one exception (ADR-0004): the
+  backend API layer may commit to it via the GitHub API, using a second PAT scoped to
+  `contents: write` + `metadata: read` on this repository only, never on any portfolio repo.
 
 ## 3. Data model
 
@@ -124,6 +136,7 @@ The threat model lives in `threat-model.md`; consequential choices are logged as
 | Backend API → GitHub | GitHub **fine-grained PAT**, scoped read-only to the specific ~27 target repos, server-side only | PAT never reaches the browser. Never included in any client bundle, log line, or error message. **Not** a classic PAT: a classic PAT's `repo` scope grants read/write to every repo the account can access, contradicting the "read-only" boundary this architecture leans on — this is recorded as ADR-0001. |
 | Secret provisioning → Runtime | Phase.dev → deployment platform env vars, pushed by Josh (manually, via Phase.dev's platform sync/CLI) at deploy time | PAT and bearer-token secret are both managed in Phase.dev, synced to the hosting platform's secret/env store before/at deploy. The running app reads them from its own platform env, not by calling Phase.dev at request time. No intermediate step (CI job, build script) may write either secret to a file, log, or build artifact — verified at Stage 5/implementation, not just asserted here. |
 | Deploy identity → Repository | Platform-native GitHub App/OAuth (Vercel or Cloudflare push-to-deploy) | A **separate credential from the runtime PAT**, with its own (different) blast radius. Scope to this single repository only. Confirm every merge to `main` auto-deploying to prod is a deliberate choice (matches "load-bearing" tier) rather than unexamined default platform behavior. |
+| Backend API → GitHub (this repo only, ADR-0004) | Second GitHub **fine-grained PAT**, scoped to `contents: write`, `metadata: read`, on `joshaumuthumani/github-project-status` only, server-side only | Distinct token from the ADR-0001 read-only portfolio PAT — never merged into one credential. Zero access, read or write, to any of the ~27 portfolio repos. Never reaches the browser; never included in any client bundle, log line, or error message, same invariant as ADR-0001. Triggered only by an authenticated (bearer-token) in-app metadata edit; not exposed as a generic GitHub-write API. |
 
 - **Identities:** exactly one human identity (Josh), authenticated to the dashboard by
   possession of the bearer token. No user table, no password, no OAuth flow — matches Stage 2's
@@ -133,8 +146,14 @@ The threat model lives in `threat-model.md`; consequential choices are logged as
   data; it must never be reachable from client-side code or from any log/error path. This is the
   architecture's single most consequential trust boundary and is the primary subject for
   `security-architect`'s threat model.
-- **No write path exists** from the dashboard back to GitHub — eliminates an entire class of
-  authorization concerns (no scoped write permissions to reason about).
+- **No write path exists from the dashboard back to any of the ~27 portfolio repos** — eliminates
+  that class of authorization concerns entirely for tracked-repo data. **One narrow write path
+  does exist** (ADR-0004): an authenticated in-app edit to this repository's own curated-metadata
+  file, via a second PAT scoped to `contents: write` on this repository only. This is a
+  deliberate, minimal exception, not a general write capability — it cannot reach any portfolio
+  repo, any file other than the metadata file (enforced by the API route's own logic, not by PAT
+  scope alone, since `contents: write` technically covers the whole repo), or any GitHub resource
+  type other than file contents (no PR/issue/label writes).
 - **Preview deployments:** both Vercel and Cloudflare Pages create automatic preview builds per
   PR/branch by default. Preview builds **must not** receive the production GitHub PAT or bearer
   token; use platform-scoped preview env vars (empty/dummy values) or disable preview deploys for
@@ -216,6 +235,12 @@ Still open, deliberately deferred to Stage 5 tool evaluation:
   still accurate.
 - Confirm whether the chosen platform's push-to-deploy GitHub App integration can be scoped to
   this single repository only.
+
+All items above were resolved at Stage 5/6 (`docs/evaluations/2026-09-12-stage5-tool-evaluation.md`,
+`docs/planning/2026-09-12-stage6-batched-graphql-spike.md`). ADR-0004 (in-app metadata editing,
+added at Stage 7) is a separate, later amendment — not one of these original open questions —
+carrying its own new implementation-verification item: confirm a fine-grained PAT scoped to
+`contents: write` on exactly one named repository grants no broader write access (Stage 9).
 
 ## 9. Reconciliation — specialist finding dispositions
 
