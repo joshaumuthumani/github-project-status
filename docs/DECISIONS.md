@@ -168,7 +168,50 @@ verification/implementation gates for Stage 5 and Stage 9 (Build loop), not open
 questions: (1) confirm the issued PAT is genuinely fine-grained/read-only, not a classic PAT;
 (2) confirm preview deployments are credential-isolated; (3) confirm neither secret ever appears
 in build logs/error output/client bundles on the actually-chosen platform; (4) confirm the
-platform's deploy identity is scoped to this repo only and distinct from the runtime PAT. Next
+platform's deploy identity is scoped to this repo only
+
+---
+
+## 2026-09-12 — Stage 5 tool evaluation: gate passes, Vercel recommended
+
+**Decision:** All Stage 3-carried claims verified against current primary sources; the Stage 5
+gate passes. No component rejected. Recommend **Vercel** (not Cloudflare) as the deploy platform,
+and **Next.js** as the frontend/backend framework, carried into Stage 6 rather than re-litigated
+there.
+
+**Context:** Independent verification (tool-evaluator role) of every falsifiable claim listed in
+`architecture.md` §8 and the four Stage 3 carry-forward items above. Full report:
+`docs/evaluations/2026-09-12-stage5-tool-evaluation.md`. Ran in parallel with the Stage 4 Visual
+Quality Gate on the architecture diagram (independent artifacts, no dependency between them per
+`sdlc-pipeline.md` Stage 4/5 definitions).
+
+**Findings:**
+- GitHub GraphQL primary rate limit (5,000 pts/hr): **CONFIRMED** sufficient for a 27-repo
+  on-demand batched refresh.
+- Secondary rate-limit avoidance rationale behind ADR-0003 (batched GraphQL over N REST calls):
+  **CONFIRMED** against current GitHub REST API best-practices docs.
+- Fine-grained PAT scoped to the exact ~27 target repos (ADR-0001, carry-forward item 1):
+  **CONFIRMED** — GitHub's fine-grained PAT creation flow supports per-repository selection with
+  read-only permission grants.
+- Vercel: function timeout, sensitive/build-log-redacted env vars, per-repo-scoped GitHub App
+  install, and Preview/Production env var isolation (ADR-0002, carry-forward items 2-4): all
+  **CONFIRMED**. Correction: architecture.md §8 had assumed a stale "10s" Hobby-tier function
+  timeout; current docs show 300s default/max on Hobby — materially more headroom, not a
+  blocker either way.
+- Cloudflare (alternate candidate): **CONFIRMED WITH CAVEAT** — Free-tier CPU time (10ms,
+  network I/O wait excluded) is a tighter margin than Vercel's 300s wall-clock budget; viable but
+  worth re-verifying against a real build if chosen instead of Vercel.
+
+**Rationale:** Vercel clears every carry-forward item with the larger operational margin and
+matches the Architecture Council's own stated MVP fit (`architecture.md` §6). No reason surfaced
+to prefer Cloudflare for this single-user, low-traffic tool.
+
+**Consequences:** The environment/deploy provisioning gate opens (Rule 1,
+`sdlc-pipeline.md`). Stage 6 (rapid prototype) and onward may build on Vercel + Next.js +
+fine-grained PAT + batched GraphQL without re-verifying these claims, unless implementation
+surfaces a contradiction.
+
+**Owner:** Josh Muthumani. and distinct from the runtime PAT. Next
 is Stage 4 (architecture diagram, optional/conditional) and Stage 5 (tool evaluation) to resolve
 the deferred framework/platform choices and verify the falsifiable claims listed in
 `architecture.md` §8, then Stage 7 PRD.
