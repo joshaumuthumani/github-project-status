@@ -108,3 +108,30 @@ reviews endpoint would mean Phase 3 was absent.
 **Owner:** Josh Muthumani.
 
 ---
+
+## 2026-09-12 — Stage 2 Discovery approved: portfolio-view-only MVP
+
+**Decision:** MVP scope is the portfolio view only (all repos, curated tags, PR/issue counts,
+last-activity date). Per-repo detail view is real but deferred to the next slice. Repos are
+auto-discovered via the GitHub API (forks/archived excluded by default, override via curated
+metadata); status taxonomy is a fixed enum in local curated metadata, independent of each
+repo's own GitHub labels. Data refresh is on-demand only (no scheduler/cache). GitHub auth is
+a PAT via Phase.dev. The app is deployed (not local-only), single-user, Vercel or Cloudflare
+candidate, gated by a simple shared-secret/bearer token — no OAuth, no user DB. Exact stack
+is explicitly deferred to Stage 3/5.
+
+**Context:** Stage 2 Discovery against the idea brief `~/Brain/Ideas/github-project-status.md`,
+using the `brainstorming` skill's one-question-at-a-time process. Full structured requirement
+recorded at `docs/planning/2026-09-12-portfolio-dashboard-discovery.md`.
+
+**Rationale:** Keeps the first shippable slice small (one page, read-only, on-demand) while
+avoiding premature stack lock-in ahead of Architecture Council. Manual status tagging avoids
+fragile inference across 27 repos with inconsistent GitHub label conventions.
+
+**Consequences:** Stage 2 is complete for this requirement. Next is Stage 3 (Architecture
+Council) and Stage 5 (tool evaluation) to settle the stack, then Stage 7 PRD drafting and
+approval before any implementation.
+
+**Owner:** Josh Muthumani.
+
+---
