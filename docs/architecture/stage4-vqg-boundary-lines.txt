@@ -1,0 +1,3 @@
+639d86cc16f658e53b75bc7f6cbded163c4062f7b85ee82ea322f0bf5dd816a8  docs/architecture/portfolio-dashboard-archify.html
+7608cdef2e21067affad22e943017db9a97ed1bfb5ba464a327a6af1875b1072  docs/architecture/portfolio-dashboard-topology.html
+0c6f4db202a7f4233064a613d2529e89c5267c48097e3d19bb500a72a685b4f8  docs/architecture/portfolio-dashboard.archify.json

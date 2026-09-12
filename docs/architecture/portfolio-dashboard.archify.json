@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GitHub Portfolio Status Dashboard",
+    "subtitle": "Stage 3 architecture, reconciled 2026-09-12 — single-user, read-only, on-demand refresh",
+    "output": "portfolio-dashboard-rendered.html",
+    "quality_profile": "showcase",
+    "views": [
+      {
+        "id": "request-path",
+        "label": "Dashboard request path",
+        "focus": ["browser", "frontend", "backend", "metadata", "github"],
+        "note": "Josh's browser through the backend to GitHub and the bundled metadata file — the primary read path."
+      },
+      {
+        "id": "secret-lifecycle",
+        "label": "Secret lifecycle",
+        "focus": ["phasedev", "josh", "envstore", "backend"],
+        "note": "Phase.dev is system of record; secrets are manually synced to the platform env store at deploy time, then read by the backend at boot."
+      },
+      {
+        "id": "trust-boundary",
+        "label": "Trust boundary",
+        "focus": ["anon", "browser", "frontend", "backend"],
+        "note": "The bearer token is the sole access gate; an anonymous caller with no token gets nothing."
+      }
+    ]
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "Browser (Josh)", "sublabel": "sole intended user", "pos": [40, 280], "size": [140, 64] },
+    { "id": "anon", "type": "external", "label": "Anonymous caller", "sublabel": "no bearer token", "pos": [40, 440], "size": [140, 60] },
+    { "id": "frontend", "type": "frontend", "label": "Web App", "sublabel": "static / SSR", "pos": [320, 280], "size": [140, 64] },
+    { "id": "backend", "type": "backend", "label": "Backend API", "sublabel": "serverless fn", "pos": [600, 280], "size": [140, 64], "tag": "holds GitHub PAT" },
+    { "id": "metadata", "type": "database", "label": "Curated Metadata", "sublabel": "git-tracked JSON", "pos": [600, 460], "size": [140, 60] },
+    { "id": "github", "type": "cloud", "label": "GitHub.com", "sublabel": "~27 repos, read-only", "pos": [900, 280], "size": [150, 64] },
+    { "id": "envstore", "type": "security", "label": "Platform Env Store", "sublabel": "runtime secret copy", "pos": [600, 100], "size": [150, 64], "tag": "PAT + bearer token" },
+    { "id": "phasedev", "type": "security", "label": "Phase.dev", "sublabel": "secret broker", "pos": [900, 100], "size": [150, 64] },
+    { "id": "josh", "type": "external", "label": "Josh (operator)", "sublabel": "manual deploy-time sync", "pos": [1140, 100], "size": [150, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Deployment Platform (Vercel or Cloudflare)", "wraps": ["frontend", "backend", "metadata", "envstore"] },
+    { "kind": "security-group", "label": "Preview deploys: no prod secrets (ADR-0002)", "wraps": ["frontend", "backend"] }
+  ],
+  "connections": [
+    { "id": "browser-frontend", "from": "browser", "to": "frontend", "label": "HTTPS + bearer token", "variant": "emphasis", "labelAt": [180, 276] },
+    { "id": "anon-frontend", "from": "anon", "to": "frontend", "label": "rejected: no token", "variant": "dashed", "fromSide": "right", "toSide": "bottom" },
+    { "id": "frontend-backend", "from": "frontend", "to": "backend", "label": "same-origin API call", "variant": "emphasis", "labelDy": 22 },
+    { "id": "backend-metadata", "from": "backend", "to": "metadata", "label": "build-bundled read", "variant": "dashed", "fromSide": "bottom", "toSide": "top", "labelDy": 24 },
+    { "id": "backend-github", "from": "backend", "to": "github", "label": "batched GraphQL (PAT, read-only)", "labelDy": -26 },
+    { "id": "backend-envstore", "from": "backend", "to": "envstore", "label": "reads secrets at boot", "variant": "security", "fromSide": "top", "toSide": "bottom" },
+    { "id": "phasedev-envstore", "from": "phasedev", "to": "envstore", "label": "manual sync (deploy time)", "variant": "dashed" },
+    { "id": "josh-phasedev", "from": "josh", "to": "phasedev", "label": "Phase.dev CLI/session", "labelDy": -24 }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Access", "items": ["Single shared bearer token gates the dashboard — no accounts/OAuth", "GitHub PAT is fine-grained, read-only, scoped to ~27 repos (ADR-0001)"] },
+    { "dot": "emerald", "title": "Data", "items": ["No database — curated metadata is git-tracked and build-bundled", "Single batched GraphQL query per refresh, not N REST calls (ADR-0003)"] },
+    { "dot": "rose", "title": "Secrets", "items": ["Phase.dev is system of record; synced manually to platform env vars at deploy time", "Preview deployments must not receive production secrets (ADR-0002)"] }
+  ]
+}
