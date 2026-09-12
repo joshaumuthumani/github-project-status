@@ -9,9 +9,11 @@ metadata file for what GitHub can't know (tags, purpose, production status).
 Idea brief: `~/Brain/Ideas/github-project-status.md`
 
 - **Tier:** load-bearing. Every pipeline stage runs; none are skipped.
-- **Stage:** 6 complete (rapid prototype — batched-GraphQL spike confirmed ADR-0003, no design
-  change). Stage 4 (architecture diagram) also complete — VQG-reviewed, shipped as
-  `docs/architecture/portfolio-dashboard-archify.html` (#9, PR #14). Stage 7 (PRD/plan) is next.
+- **Stage:** 7 in progress — PRD approved and merged (#16, PR #18: `docs/PRD.md`). Project plan
+  drafted (`docs/planning/2026-09-12-stage7-project-plan.md`), pending Josh's approval before
+  Stage 8 task decomposition. Stage 6 (rapid prototype — batched-GraphQL spike confirmed
+  ADR-0003) and Stage 4 (architecture diagram, VQG-reviewed, `docs/architecture/portfolio-dashboard-archify.html`,
+  #9/PR #14) are complete.
 
 Not FlowDesk (personal PM/planning) and not the parked `agent-dashboard` idea (general-purpose
 agent/workflow dashboard). See the idea brief's Boundaries section.
