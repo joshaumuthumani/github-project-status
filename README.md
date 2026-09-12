@@ -9,9 +9,9 @@ metadata file for what GitHub can't know (tags, purpose, production status).
 Idea brief: `~/Brain/Ideas/github-project-status.md`
 
 - **Tier:** load-bearing. Every pipeline stage runs; none are skipped.
-- **Stage:** 5 complete (tool evaluation — gate passed, Vercel + Next.js recommended). Stage 4
-  (architecture diagram) Visual Quality Gate review is running in parallel. Stage 6 (rapid
-  prototype) is next.
+- **Stage:** 6 complete (rapid prototype — batched-GraphQL spike confirmed ADR-0003, no design
+  change). Stage 4 (architecture diagram) Visual Quality Gate review is running in parallel.
+  Stage 7 (PRD/plan) is next.
 
 Not FlowDesk (personal PM/planning) and not the parked `agent-dashboard` idea (general-purpose
 agent/workflow dashboard). See the idea brief's Boundaries section.

@@ -219,3 +219,39 @@ the deferred framework/platform choices and verify the falsifiable claims listed
 **Owner:** Josh Muthumani.
 
 ---
+
+## 2026-09-12 — Stage 6 rapid prototype: batched-GraphQL spike confirms ADR-0003
+
+**Decision:** The single riskiest unresolved design question — whether one GraphQL query can
+alias and batch PR/issue counts and last-activity for ~27 repos in one round trip — is answered
+**yes**, with margin. No architecture change. Spike code deleted; nothing carried forward.
+
+**Context:** Stage 6 rapid prototype (`sdlc-pipeline.md` Stage 6), tracked in issue #12. Ran a
+live GraphQL query (`gh api graphql`, existing authenticated session) against 24 real non-fork,
+non-archived repos on the account (close to architecture.md's ~27 figure), aliasing `name`,
+`pushedAt`, open PR count, and open issue count per repo in a single request, plus a top-level
+`rateLimit` field to read the real cost GitHub charged. Full real-vs-faked record:
+`docs/planning/2026-09-12-stage6-batched-graphql-spike.md`.
+
+**Findings:**
+- Cost: **1 point** per refresh (of a 5,000 pts/hr budget) — well below the "tens to low
+  hundreds" estimate in the Stage 5 report.
+- Wall time: **~1.26s** end-to-end for 24 repos in one call — an order of magnitude under any
+  realistic serverless timeout.
+- No node-limit or query-complexity error; response returned cleanly.
+- Confirms ADR-0003 and `architecture.md` §6's batched-query performance claim was correct
+  as originally decided — this raises confidence rather than changing anything.
+
+**Rationale:** Cheaper to verify the live query shape now, disposably, than discover a
+node-limit or complexity problem mid-build. Used the existing `gh` CLI session rather than
+provisioning a fresh fine-grained PAT for the spike, since Stage 5 already independently
+verified fine-grained-PAT repo-scoping and GraphQL-auth support — this spike targeted query
+structure and cost, not credential type.
+
+**Consequences:** No open architecture question remains for the MVP scope. Stage 7 (PRD/plan)
+may proceed on the confirmed design. Spike code was never committed and is deleted; nothing from
+it exists to carry into the real build.
+
+**Owner:** Josh Muthumani.
+
+---
