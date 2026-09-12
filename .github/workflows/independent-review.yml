@@ -30,7 +30,10 @@ permissions:
 jobs:
   pr-agent:
     name: PR-Agent (external)
-    runs-on: ubuntu-latest
+    # Pilot (issue #4): moved to the repo-scoped self-hosted runner. Phase 1 (untrusted
+    # PR code) and Phase 3 (formal approval identity) stay GitHub-hosted; only this
+    # trusted, no-PR-checkout job runs here.
+    runs-on: [self-hosted, local-linux-ci]
     env:
       # This remains deliberately pinned; the SDLC policy forbids moving router aliases.
       EXTERNAL_PR_MODEL: openrouter/qwen/qwen3-coder-flash
