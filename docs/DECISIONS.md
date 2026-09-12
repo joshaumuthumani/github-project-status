@@ -135,3 +135,44 @@ approval before any implementation.
 **Owner:** Josh Muthumani.
 
 ---
+
+## 2026-09-12 — Stage 3 Architecture Council complete: portfolio dashboard architecture
+
+**Decision:** Architecture reconciled and accepted for the GitHub Portfolio Status Dashboard.
+Server-side-only GitHub PAT (fine-grained, read-only, scoped to the ~27 target repos — ADR-0001),
+bearer-token-gated backend API, no database, no write path back to GitHub, no caching (on-demand
+refresh only). GitHub reads batched into a single GraphQL query per refresh rather than N REST
+calls (ADR-0003). Preview deployments on the eventual hosting platform must not receive
+production secrets (ADR-0002). Deployment platform choice (Vercel recommended, Cloudflare viable)
+and exact frontend/backend framework remain explicitly deferred to Stage 5 tool evaluation.
+
+**Context:** Stage 3 Architecture Council run via the `architecture-council` skill against the
+Stage 2 discovery artifact. Council seated `project-architect` (lead), `security-architect`
+(integrated threat model), `backend-architect`, and `cloud-security-architect` (both seated
+because the design includes a non-trivial API contract, provider-managed serverless deployment,
+and a secrets-manager integration). Specialist review surfaced 14 findings, all Medium/Low
+severity — no Critical/High architectural flaw was found in the initial draft. All findings
+accepted and incorporated or explicitly named as residual risk; none rejected, none left
+undispositioned. Full detail: `docs/architecture/architecture.md` (reconciled, §9 has the full
+disposition table), `docs/architecture/threat-model.md` (STRIDE analysis, attack-surface
+inventory, verification criteria), `docs/architecture/adr/0001-`, `0002-`, `0003-`.
+
+**Rationale:** A single-user, read-only, low-blast-radius personal tool does not need
+multi-environment, rotation, or alerting infrastructure — those are named as accepted residual
+risks rather than architected away, keeping the design proportionate to actual risk. The two
+credentials (GitHub PAT, bearer token) and their handling are the architecture's central trust
+boundary and received the most scrutiny (ADR-0001, ADR-0002, both threat-model High findings).
+
+**Consequences:** Stage 3 is complete. Four items are carried forward as required
+verification/implementation gates for Stage 5 and Stage 9 (Build loop), not open architecture
+questions: (1) confirm the issued PAT is genuinely fine-grained/read-only, not a classic PAT;
+(2) confirm preview deployments are credential-isolated; (3) confirm neither secret ever appears
+in build logs/error output/client bundles on the actually-chosen platform; (4) confirm the
+platform's deploy identity is scoped to this repo only and distinct from the runtime PAT. Next
+is Stage 4 (architecture diagram, optional/conditional) and Stage 5 (tool evaluation) to resolve
+the deferred framework/platform choices and verify the falsifiable claims listed in
+`architecture.md` §8, then Stage 7 PRD.
+
+**Owner:** Josh Muthumani.
+
+---
