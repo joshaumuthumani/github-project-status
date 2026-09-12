@@ -86,3 +86,25 @@ docs, security review artifacts) even though the canonical skill doesn't pre-cre
 Stage 1. Removing them now would be pure churn with no benefit.
 
 ---
+
+## 2026-09-11 — Stage 1 gate chain proven; branch protection enabled
+
+**Decision:** Committed and pushed the Stage 1 scaffold to `main`, then opened disposable PR #1
+(`chore/disposable-gate-proof`) to prove the Stage 10 Phase 1 → 2 → 3 chain end to end, per
+`project-init.md` § 5. `Gate` (Phase 1: Build & Test, Security) passed, `Independent Review`
+(Phase 2) completed, and `PR Verdict` (Phase 3) cast a formal `APPROVED` review as
+`pr-external-review-bot[bot]` against the PR's exact head SHA (`ce03ec1`), confirmed via the
+GitHub pull-request reviews endpoint — not just a green check. Closed the PR without merging and
+deleted its branch. Enabled branch protection on `main`: PR required, 1 approving review with
+`require_last_push_approval` and `dismiss_stale_reviews`, required status checks `Build & Test`
+and `Security` (strict), `enforce_admins` on, no force-push or deletion.
+
+**Context:** Stage 1 exit criteria require the gate CI installed *and enforced*, and the verdict
+integration proven rather than merely configured — a green external-review check or empty
+reviews endpoint would mean Phase 3 was absent.
+
+**Consequences:** Stage 1 is now complete for this repo. Stage 2 (Discovery) is next.
+
+**Owner:** Josh Muthumani.
+
+---

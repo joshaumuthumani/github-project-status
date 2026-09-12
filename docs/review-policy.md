@@ -9,7 +9,11 @@ not restate or override the policy itself.
 Stage 1 gate installed (`.github/workflows/gate.yml`, `independent-review.yml`,
 `pr-verdict.yml`). No stack has been chosen yet (Stage 5 is still open), so `gate.yml`'s quality
 job no-ops until a `package.json` exists — see the guard comment in that file. Branch protection
-and the disposable-PR proof of the Phase 3 verdict are still outstanding.
+is on. The disposable-PR proof of the Phase 3 verdict passed: PR #1
+(`chore/disposable-gate-proof`) ran the full Phase 1 → 2 → 3 chain and
+`pr-external-review-bot[bot]` cast an `APPROVED` review against the PR's exact head SHA
+(`ce03ec1`), confirmed via the pull-request reviews endpoint. PR closed without merging; branch
+deleted.
 
 ## Automated checks required for every PR (Phase 1 — `gate.yml`)
 
@@ -32,8 +36,7 @@ Validates Phase 2's evidence artifact against the exact PR head SHA, then casts 
 `APPROVE` review as the `pr-external-review-bot[bot]` App identity (App ID `4708130`, via the
 `PR_EXTERNAL_REVIEW_APP_ID` repo variable and `PR_EXTERNAL_REVIEW_APP_PRIVATE_KEY_B64` repo
 secret). This is the review that satisfies branch protection's required-approval rule.
-**Not yet proven** — needs a disposable PR per `project-init.md` § 5 before branch protection
-is turned on.
+Proven on the disposable-PR run described above.
 
 ## Blocking severities
 
