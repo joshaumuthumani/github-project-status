@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Portfolio Status Dashboard — Architecture Topology</title>
+    <style>
+      /* === RESET === */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      body {
+        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        background: #f0ece4;
+        color: #2c2c2c;
+        padding: 40px 48px;
+        min-height: 100vh;
+      }
+
+      /* === PROVENANCE === */
+      .provenance {
+        max-width: 1400px;
+        margin: 0 auto 20px auto;
+        font-size: 11.5px;
+        color: #6a6a6a;
+        border-left: 3px solid #b0896a;
+        padding: 6px 12px;
+        background: rgba(255,255,255,0.4);
+      }
+      .provenance strong { color: #444; }
+
+      /* === LEGEND (top-right) === */
+      .legend {
+        display: flex;
+        gap: 24px;
+        justify-content: flex-end;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #555;
+      }
+      .legend-line {
+        width: 40px;
+        height: 0;
+        border-top: 2.5px solid currentColor;
+      }
+      .legend-line.dashed { border-top-style: dashed; }
+      .legend-line.dotted { border-top-style: dotted; }
+      .legend-swatch {
+        width: 14px;
+        height: 14px;
+        border-radius: 3px;
+        border: 2px dashed currentColor;
+      }
+
+      /* === DIAGRAM ROOT === */
+      .diagram {
+        position: relative;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      .diagram-title {
+        font-size: 21px;
+        font-weight: 700;
+        margin-bottom: 4px;
+        color: #1a1a1a;
+        letter-spacing: -0.3px;
+      }
+      .diagram-subtitle {
+        font-size: 12.5px;
+        color: #6a6a6a;
+        margin-bottom: 28px;
+      }
+
+      /* === ZONES === */
+      .zone {
+        position: relative;
+        border: 2px dashed var(--zone-border, #b0896a);
+        border-radius: 8px;
+        padding: 36px 20px 20px 20px;
+        background: var(--zone-bg, rgba(255,255,255,0.25));
+      }
+      .zone-label {
+        position: absolute;
+        top: -1px; left: 14px;
+        transform: translateY(-50%);
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--zone-label-color, #b0896a);
+        background: var(--zone-label-bg, inherit);
+        padding: 1px 10px;
+        border-radius: 3px;
+        letter-spacing: 0.4px;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+      .zone-sublabel {
+        position: absolute;
+        top: -1px; right: 14px;
+        transform: translateY(-50%);
+        font-size: 9.5px;
+        font-weight: 600;
+        color: #b04a3e;
+        background: #ede8e0;
+        padding: 1px 8px;
+        border-radius: 3px;
+        letter-spacing: 0.2px;
+        white-space: nowrap;
+      }
+
+      .zone-content {
+        display: grid;
+        gap: 16px;
+        align-items: start;
+      }
+
+      /* Depth presets */
+      .zone-depth-0 {
+        --zone-border: #9a5b4a;
+        --zone-bg: rgba(255,255,255,0.15);
+        --zone-label-color: #9a5b4a;
+        --zone-label-bg: #ede8e0;
+      }
+      .zone-depth-1 {
+        --zone-border: #c67a2e;
+        --zone-bg: rgba(255,255,255,0.20);
+        --zone-label-color: #c67a2e;
+        --zone-label-bg: #ede8e0;
+      }
+      .zone-depth-2 {
+        --zone-border: #d44a3e;
+        --zone-bg: rgba(255,255,255,0.25);
+        --zone-label-color: #d44a3e;
+        --zone-label-bg: #ede8e0;
+      }
+      .zone-untrusted {
+        --zone-border: #7a7a7a;
+        --zone-bg: rgba(230,230,230,0.35);
+        --zone-label-color: #555;
+        --zone-label-bg: #e4e4e4;
+      }
+      .zone-secret {
+        --zone-border: #b0202a;
+        --zone-bg: rgba(255, 240, 240, 0.35);
+        --zone-label-color: #b0202a;
+        --zone-label-bg: #f7e5e5;
+      }
+
+      /* === NODES === */
+      .node {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px 6px;
+        min-width: 90px;
+        max-width: 190px;
+      }
+      .node-icon {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--icon-color, #3a3a3a);
+        margin-bottom: 2px;
+      }
+      .node-icon svg { width: 100%; height: 100%; }
+      .node-title {
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+        color: #1a1a1a;
+        line-height: 1.3;
+      }
+      .node-desc {
+        font-size: 10.5px;
+        font-weight: 400;
+        text-align: center;
+        color: #555;
+        line-height: 1.35;
+        max-width: 175px;
+      }
+      .node-secret .node-icon { color: #b0202a; }
+
+      .node-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      /* === CONNECTION OVERLAY === */
+      .conn-overlay {
+        position: absolute;
+        top: 0; left: 0;
+        pointer-events: none;
+        overflow: visible;
+        z-index: 10;
+      }
+      .conn-overlay path {
+        fill: none;
+        stroke-width: 2;
+        stroke-linejoin: round;
+      }
+      .conn-overlay .conn-default  { stroke: #0077b6; }
+      .conn-overlay .conn-realtime { stroke: #0077b6; }
+      .conn-overlay .conn-batch    { stroke: #c74634; stroke-dasharray: 8 5; }
+      .conn-overlay .conn-event    { stroke: #2e7d32; }
+      .conn-overlay .conn-control  { stroke: #c67a2e; stroke-dasharray: 6 4; }
+      .conn-overlay .conn-dashed   { stroke: #6a6a6a; stroke-dasharray: 5 4; }
+
+      .conn-overlay text {
+        font-size: 10px;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        fill: #666;
+        font-weight: 600;
+      }
+
+      /* === FOOTNOTE === */
+      .footnote {
+        max-width: 1400px;
+        margin: 24px auto 0 auto;
+        font-size: 11px;
+        color: #777;
+        line-height: 1.5;
+      }
+      .footnote strong { color: #444; }
+
+      /* === SR-ONLY TEXT SUMMARY === */
+      .sr-only {
+        position: absolute;
+        width: 1px; height: 1px;
+        padding: 0; margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        white-space: nowrap;
+        border: 0;
+      }
+
+      /* === GRID UTILITIES === */
+      .span-2 { grid-column: span 2; }
+      .span-3 { grid-column: span 3; }
+      .span-full { grid-column: 1 / -1; }
+      .self-center { justify-self: center; }
+      .self-start { justify-self: start; }
+      .self-end { justify-self: end; }
+      .align-center { align-self: center; }
+
+      @media (max-width: 900px) {
+        body { padding: 20px 16px; }
+        .zone-content[style] { grid-template-columns: 1fr !important; }
+      }
+
+      /* === MACHINE-READABLE EDGE/GATE GRAPH TABLE === */
+      .graph-table-wrap {
+        max-width: 1400px;
+        margin: 28px auto 0 auto;
+      }
+      .graph-table-wrap > summary {
+        cursor: pointer;
+        font-size: 12.5px;
+        font-weight: 700;
+        color: #6a6a6a;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        padding: 4px 0;
+      }
+      table.graph-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        font-size: 12px;
+      }
+      table.graph-table caption {
+        text-align: left;
+        font-size: 11px;
+        color: #6a6a6a;
+        margin-bottom: 6px;
+      }
+      table.graph-table th, table.graph-table td {
+        border: 1px solid #d8d2c6;
+        padding: 6px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+      table.graph-table th { background: #ede8e0; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+    <div class="provenance" role="note">
+      <strong>Stage 4 — Architecture Diagram.</strong> Rendered from
+      <code>docs/architecture/architecture.md</code> (Stage 3, Architecture Council, reconciled
+      2026-09-12) and <code>docs/architecture/threat-model.md</code> (2026-09-12), plus
+      ADR-0001, ADR-0002, ADR-0003. This diagram visualizes the approved topology; it does not
+      revise it. If this file's revision date is older than the source documents, re-render
+      before relying on it.
+    </div>
+
+    <p class="sr-only">
+      Text summary of topology: Josh's browser sends HTTPS requests with a bearer token to the
+      Web app frontend. The frontend makes a same-origin API call, also carrying the bearer
+      token, to the Backend API layer (serverless functions). The Backend API verifies the
+      bearer token on every route, then reads the version-controlled curated metadata file
+      (build-bundled, not network-crossing) and issues a single batched GraphQL query to
+      GitHub.com using a fine-grained, read-only Personal Access Token, scoped to about 27
+      repositories (ADR-0001, ADR-0003). GitHub is read-only; there is no write path back to
+      GitHub. Separately, Josh manually syncs the GitHub PAT and the dashboard bearer token from
+      Phase.dev, the trusted secret broker, into the deployment platform's (Vercel or Cloudflare)
+      environment-variable store at deploy time; the running app reads secrets from that
+      platform env store, not from Phase.dev at request time. Preview deployments, created
+      automatically per pull request by both candidate platforms, must not receive these
+      production secrets (ADR-0002) — implementation must either supply empty/dummy preview env
+      vars or disable preview deployments outright. The only untrusted actor in this model is an
+      anonymous internet caller with no valid bearer token.
+    </p>
+
+    <!-- === LEGEND === -->
+    <section class="legend" aria-label="Connector and boundary legend">
+      <h2 class="sr-only">Legend</h2>
+      <div class="legend-item"><div class="legend-line" style="color:#0077b6;"></div>Sync request / response (bearer token)</div>
+      <div class="legend-item"><div class="legend-line" style="color:#2e7d32;"></div>Read-only GitHub API (PAT, batched GraphQL)</div>
+      <div class="legend-item"><div class="legend-line dashed" style="color:#c67a2e;"></div>Manual secret sync (Josh-initiated, deploy time)</div>
+      <div class="legend-item"><div class="legend-line dashed" style="color:#6a6a6a;"></div>Build-bundled read (not network-crossing)</div>
+      <div class="legend-item"><div class="legend-swatch" style="color:#b0202a;"></div>Secret-holding boundary</div>
+      <div class="legend-item"><div class="legend-swatch" style="color:#7a7a7a;"></div>Untrusted zone</div>
+    </section>
+
+    <section class="diagram" id="diagram" aria-labelledby="diagram-title">
+      <h1 class="diagram-title" id="diagram-title">GitHub Portfolio Status Dashboard — Architecture Topology</h1>
+      <p class="diagram-subtitle">
+        Single-user, read-only, on-demand-refresh dashboard. Tier: load-bearing. Stage 3
+        (Architecture Council) reconciled 2026-09-12 — see architecture.md and threat-model.md.
+      </p>
+
+      <div
+        class="zone-content"
+        style="grid-template-columns: 220px minmax(560px, 1fr) 230px; gap: 32px; align-items: start;"
+      >
+        <!-- LEFT: Untrusted zone / client -->
+        <div class="zone zone-untrusted">
+          <span class="zone-label">Untrusted network</span>
+          <div class="zone-content" style="grid-template-columns: 1fr; gap: 20px; justify-items: center;">
+            <div class="node" data-node-id="browser">
+              <div class="node-icon">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="6" width="52" height="38" rx="3" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.08"/><line x1="6" y1="16" x2="58" y2="16" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="11" r="2" fill="currentColor" fill-opacity="0.4"/><circle cx="18" cy="11" r="2" fill="currentColor" fill-opacity="0.4"/><circle cx="24" cy="11" r="2" fill="currentColor" fill-opacity="0.4"/><line x1="24" y1="48" x2="40" y2="48" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="54" x2="44" y2="54" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+              </div>
+              <span class="node-title">Browser (Josh only)</span>
+              <span class="node-desc">Trusted human, untrusted network path. Sole intended user — single shared bearer token, no accounts/OAuth.</span>
+            </div>
+            <div class="node" data-node-id="anon">
+              <div class="node-icon">
+                <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M32 6 L58 54 L6 54 Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="currentColor" fill-opacity="0.08"/><line x1="32" y1="24" x2="32" y2="38" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="46" r="2.5" fill="currentColor"/></svg>
+              </div>
+              <span class="node-title">Anonymous caller</span>
+              <span class="node-desc">Realistic adversary in this model. No valid bearer token = no data (threat-model.md §1).</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CENTER: Deployment platform -->
+        <div class="zone zone-depth-0">
+          <span class="zone-label">Deployment platform (Vercel or Cloudflare)</span>
+          <span class="zone-sublabel">Preview deploys: no prod secrets — ADR-0002</span>
+          <div class="zone-content" style="grid-template-columns: 1fr; gap: 24px;">
+
+            <div class="zone-content" style="grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+              <div class="node" data-node-id="frontend">
+                <div class="node-icon">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="6" y="6" width="52" height="38" rx="3" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.08"/><line x1="6" y1="16" x2="58" y2="16" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="11" r="2" fill="currentColor" fill-opacity="0.4"/><circle cx="18" cy="11" r="2" fill="currentColor" fill-opacity="0.4"/><circle cx="24" cy="11" r="2" fill="currentColor" fill-opacity="0.4"/><line x1="24" y1="48" x2="40" y2="48" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><line x1="20" y1="54" x2="44" y2="54" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                </div>
+                <span class="node-title">Web app (frontend)</span>
+                <span class="node-desc">Static/SSR portfolio page. No GitHub PAT ever reaches client-side code.</span>
+              </div>
+
+              <div class="node node-secret" data-node-id="backend">
+                <div class="node-icon">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 8 L44 8 L38 32 L48 32 L24 58 L30 36 L18 36 Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" fill="currentColor" fill-opacity="0.15"/></svg>
+                </div>
+                <span class="node-title">Backend API layer</span>
+                <span class="node-desc">Serverless functions. Sole holder of the GitHub PAT. Verifies bearer token on every route. Merges GitHub + curated metadata.</span>
+              </div>
+            </div>
+
+            <div class="zone-content" style="grid-template-columns: 1fr; gap: 12px; justify-items: center;">
+              <div class="node" data-node-id="metadata">
+                <div class="node-icon">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="6" width="36" height="52" rx="3" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.08"/><line x1="22" y1="18" x2="42" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="26" x2="38" y2="26" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="34" x2="42" y2="34" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="42" x2="34" y2="42" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="22" y1="50" x2="40" y2="50" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                </div>
+                <span class="node-title">Curated metadata file</span>
+                <span class="node-desc">Git-tracked (e.g. portfolio-metadata.json), build-bundled. Deploy-time-frozen, not live. Tolerant parse per-entry, fail-closed if fully malformed.</span>
+              </div>
+            </div>
+
+            <div class="zone zone-secret" style="margin-top: 4px;">
+              <span class="zone-label">Env var store (runtime secret copy)</span>
+              <div class="zone-content" style="grid-template-columns: 1fr 1fr; gap: 20px; justify-items: center;">
+                <div class="node node-secret" data-node-id="pat-env">
+                  <div class="node-icon">
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="28" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.12"/><path d="M22 28 V20 C22 12 26 8 32 8 C38 8 42 12 42 20 V28" stroke="currentColor" stroke-width="2.5" fill="none"/><circle cx="32" cy="40" r="4" fill="currentColor"/><line x1="32" y1="44" x2="32" y2="50" stroke="currentColor" stroke-width="2.5"/></svg>
+                  </div>
+                  <span class="node-title">GitHub PAT</span>
+                  <span class="node-desc">Fine-grained, read-only, ~27-repo scoped (ADR-0001). Server-side only.</span>
+                </div>
+                <div class="node node-secret" data-node-id="bearer-env">
+                  <div class="node-icon">
+                    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="28" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.12"/><path d="M22 28 V20 C22 12 26 8 32 8 C38 8 42 12 42 20 V28" stroke="currentColor" stroke-width="2.5" fill="none"/><circle cx="32" cy="40" r="4" fill="currentColor"/><line x1="32" y1="44" x2="32" y2="50" stroke="currentColor" stroke-width="2.5"/></svg>
+                  </div>
+                  <span class="node-title">Bearer token</span>
+                  <span class="node-desc">Sole dashboard access gate. No rotation/expiry — accepted risk (threat-model.md §6).</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: External trusted systems -->
+        <div class="zone-content" style="grid-template-columns: 1fr; gap: 24px;">
+          <div class="zone zone-depth-1">
+            <span class="zone-label">External API</span>
+            <div class="zone-content" style="grid-template-columns: 1fr; justify-items: center;">
+              <div class="node" data-node-id="github">
+                <div class="node-icon">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.06"/><ellipse cx="32" cy="32" rx="12" ry="24" stroke="currentColor" stroke-width="1.8"/><line x1="8" y1="22" x2="56" y2="22" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="42" x2="56" y2="42" stroke="currentColor" stroke-width="1.5"/></svg>
+                </div>
+                <span class="node-title">GitHub.com</span>
+                <span class="node-desc">~27 repos. Sole source of operational truth (PRs, issues, activity). Never mutated — no write path (ADR-0003 batched GraphQL, read-only).</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="zone zone-secret">
+            <span class="zone-label">Secret broker</span>
+            <div class="zone-content" style="grid-template-columns: 1fr; justify-items: center;">
+              <div class="node node-secret" data-node-id="phasedev">
+                <div class="node-icon">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="28" width="36" height="28" rx="4" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.12"/><path d="M22 28 V20 C22 12 26 8 32 8 C38 8 42 12 42 20 V28" stroke="currentColor" stroke-width="2.5" fill="none"/><circle cx="32" cy="40" r="4" fill="currentColor"/><line x1="32" y1="44" x2="32" y2="50" stroke="currentColor" stroke-width="2.5"/></svg>
+                </div>
+                <span class="node-title">Phase.dev</span>
+                <span class="node-desc">System of record for both secrets. Trusted secret broker (project-wide policy). Josh syncs manually at deploy time.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="node" data-node-id="josh-deploy" style="justify-self: center;">
+            <div class="node-icon">
+              <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="18" r="12" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.1"/><path d="M10 56 C10 42 20 34 32 34 C44 34 54 42 54 56" stroke="currentColor" stroke-width="2.5" fill="currentColor" fill-opacity="0.08"/></svg>
+            </div>
+            <span class="node-title">Josh (operator)</span>
+            <span class="node-desc">Manually syncs secrets Phase.dev → platform; edits metadata via commit + deploy.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- === CONNECTION OVERLAY === -->
+      <svg class="conn-overlay" id="connOverlay">
+        <defs>
+          <marker id="ah-blue" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 L2,4 Z" fill="#0077b6" />
+          </marker>
+          <marker id="ah-red" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 L2,4 Z" fill="#c74634" />
+          </marker>
+          <marker id="ah-green" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 L2,4 Z" fill="#2e7d32" />
+          </marker>
+          <marker id="ah-orange" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 L2,4 Z" fill="#c67a2e" />
+          </marker>
+          <marker id="ah-gray" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 L2,4 Z" fill="#6a6a6a" />
+          </marker>
+          <marker id="ah-blue-rev" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+            <path d="M10,0 L0,4 L10,8 L8,4 Z" fill="#0077b6" />
+          </marker>
+          <marker id="ah-red-rev" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+            <path d="M10,0 L0,4 L10,8 L8,4 Z" fill="#c74634" />
+          </marker>
+          <marker id="ah-green-rev" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+            <path d="M10,0 L0,4 L10,8 L8,4 Z" fill="#2e7d32" />
+          </marker>
+          <marker id="ah-orange-rev" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+            <path d="M10,0 L0,4 L10,8 L8,4 Z" fill="#c67a2e" />
+          </marker>
+          <marker id="ah-gray-rev" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto">
+            <path d="M10,0 L0,4 L10,8 L8,4 Z" fill="#6a6a6a" />
+          </marker>
+        </defs>
+      </svg>
+
+      <script>
+        const connections = [
+          { from: 'browser', to: 'frontend', type: 'realtime', direction: 'bidi', label: 'HTTPS + bearer token', fromSide: 'right', toSide: 'left' },
+          { from: 'frontend', to: 'backend', type: 'realtime', direction: 'bidi', label: 'same-origin API call' },
+          { from: 'backend', to: 'metadata', type: 'dashed', direction: 'forward', label: 'build-bundled read', fromSide: 'bottom', toSide: 'top' },
+          { from: 'backend', to: 'github', type: 'event', direction: 'bidi', label: 'batched GraphQL (PAT, read-only)', fromSide: 'right', toSide: 'left' },
+          { from: 'backend', to: 'pat-env', type: 'control', direction: 'backward', label: 'reads secrets at boot', fromSide: 'left', toSide: 'top' },
+          { from: 'backend', to: 'bearer-env', type: 'control', direction: 'backward', fromSide: 'right', toSide: 'top' },
+          { from: 'phasedev', to: 'pat-env', type: 'control', direction: 'forward', label: 'manual sync (deploy time)' },
+          { from: 'phasedev', to: 'bearer-env', type: 'control', direction: 'forward' },
+          { from: 'josh-deploy', to: 'phasedev', type: 'control', direction: 'forward', label: 'Phase.dev CLI/session' },
+          { from: 'anon', to: 'frontend', type: 'dashed', direction: 'forward', fromSide: 'right', toSide: 'left' },
+        ];
+
+        const typeMarker = {
+          realtime: "blue",
+          batch: "red",
+          event: "green",
+          control: "orange",
+          dashed: "gray",
+          default: "blue",
+        };
+
+        (function () {
+          const svg = document.getElementById("connOverlay");
+          const diagram = document.getElementById("diagram");
+
+          function getRect(el) {
+            const r = el.getBoundingClientRect(),
+              dr = diagram.getBoundingClientRect();
+            return {
+              x: r.left - dr.left,
+              y: r.top - dr.top,
+              w: r.width,
+              h: r.height,
+              cx: r.left - dr.left + r.width / 2,
+              cy: r.top - dr.top + r.height / 2,
+            };
+          }
+
+          const CONN_MARGIN = 16;
+          function sidePoint(rect, side) {
+            switch (side) {
+              case "left":
+                return { x: rect.x - CONN_MARGIN, y: rect.cy };
+              case "right":
+                return { x: rect.x + rect.w + CONN_MARGIN, y: rect.cy };
+              case "top":
+                return { x: rect.cx, y: rect.y - CONN_MARGIN };
+              case "bottom":
+                return { x: rect.cx, y: rect.y + rect.h + CONN_MARGIN };
+              default:
+                return { x: rect.cx, y: rect.cy };
+            }
+          }
+
+          function autoSide(fr, tr) {
+            const dx = tr.cx - fr.cx,
+              dy = tr.cy - fr.cy;
+            if (Math.abs(dx) >= Math.abs(dy))
+              return {
+                fs: dx > 0 ? "right" : "left",
+                ts: dx > 0 ? "left" : "right",
+              };
+            return {
+              fs: dy > 0 ? "bottom" : "top",
+              ts: dy > 0 ? "top" : "bottom",
+            };
+          }
+
+          function render() {
+            svg.querySelectorAll("path.conn, text.conn-label").forEach((n) => n.remove());
+            const dr = diagram.getBoundingClientRect();
+            svg.setAttribute("width", dr.width);
+            svg.setAttribute("height", dr.height);
+            svg.setAttribute("viewBox", `0 0 ${dr.width} ${dr.height}`);
+
+            const connData = connections.map((c) => {
+              const frEl = diagram.querySelector(`[data-node-id="${c.from}"]`);
+              const trEl = diagram.querySelector(`[data-node-id="${c.to}"]`);
+              if (!frEl || !trEl) return null;
+              return { ...c, fr: getRect(frEl), tr: getRect(trEl) };
+            }).filter(Boolean);
+
+            const corridorMap = {};
+            connData.forEach((cd, i) => {
+              const midX = (cd.fr.cx + cd.tr.cx) / 2;
+              const bucket = Math.round(midX / 150);
+              if (!corridorMap[bucket]) corridorMap[bucket] = [];
+              corridorMap[bucket].push(i);
+            });
+            const laneOff = new Array(connData.length).fill(0);
+            Object.values(corridorMap).forEach((idxs) => {
+              idxs.sort((a, b) => connData[a].tr.cy - connData[b].tr.cy);
+              const n = idxs.length;
+              idxs.forEach((idx, k) => {
+                laneOff[idx] = (k - (n - 1) / 2) * 14;
+              });
+            });
+
+            const placedLabels = [];
+            connData.forEach((cd, i) => {
+                            const { fr, tr, type, direction, label, route } = cd;
+              const stacked = dr.width <= 900;
+              let fs = stacked ? null : cd.fromSide, ts = stacked ? null : cd.toSide;
+              if (!fs || !ts) {
+                const auto = autoSide(fr, tr);
+                fs = fs ||
+ auto.fs;
+                ts = ts || auto.ts;
+              }
+              const p1 = sidePoint(fr, fs);
+              const p2 = sidePoint(tr, ts);
+
+              let d;
+              if (route === "straight") {
+                d = `M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+              } else if (Math.abs(p2.x - p1.x) < 80) {
+                const SM = 4;
+                const x1 = fr.x + fr.w + SM;
+                const x2 = tr.x - SM;
+                const my = (fr.cy + tr.cy) / 2;
+                d = `M${x1},${my} L${x2},${my}`;
+              } else if (Math.abs(p2.y - p1.y) < 4) {
+                d = `M${p1.x},${p1.y} L${p2.x},${p2.y}`;
+              } else {
+                const mx = (p1.x + p2.x) / 2 + laneOff[i];
+                d = `M${p1.x},${p1.y} L${mx},${p1.y} L${mx},${p2.y} L${p2.x},${p2.y}`;
+              }
+
+              const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+              path.classList.add("conn", `conn-${type || "default"}`);
+              path.setAttribute("d", d);
+
+              const mc = typeMarker[type] || "blue";
+              if (direction === "bidi") {
+                path.setAttribute("marker-start", `url(#ah-${mc}-rev)`);
+                path.setAttribute("marker-end", `url(#ah-${mc})`);
+              } else if (direction === "backward") {
+                path.setAttribute("marker-start", `url(#ah-${mc}-rev)`);
+              } else {
+                path.setAttribute("marker-end", `url(#ah-${mc})`);
+              }
+              svg.appendChild(path);
+
+              if (label) {
+                const lx = (p1.x + p2.x) / 2;
+                let ly = Math.min(p1.y, p2.y) - 6;
+                const approxW = label.length * 5.6;
+                let collided = true;
+                while (collided) {
+                  collided = placedLabels.some(
+                    (pl) =>
+                      Math.abs(pl.y - ly) < 13 &&
+                      lx - approxW / 2 < pl.x + pl.w / 2 &&
+                      lx + approxW / 2 > pl.x - pl.w / 2,
+                  );
+                  if (collided) ly -= 13;
+                }
+                placedLabels.push({ x: lx, y: ly, w: approxW });
+                const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                text.classList.add("conn-label");
+                text.setAttribute("x", lx);
+                text.setAttribute("y", ly);
+                text.setAttribute("text-anchor", "middle");
+                text.textContent = label;
+                svg.appendChild(text);
+              }
+            });
+          }
+
+          window.addEventListener("load", render);
+          window.addEventListener("resize", render);
+          if (document.readyState === "complete") render();
+        })();
+      </script>
+    </section>
+
+    <section class="graph-table-wrap-outer" aria-labelledby="graph-table-heading">
+      <h2 id="graph-table-heading" class="sr-only">Machine-readable node and edge table</h2>
+      <details class="graph-table-wrap">
+        <summary>Machine-readable node &amp; edge table (accessible equivalent of the diagram above)</summary>
+
+      <table class="graph-table">
+        <caption>Nodes — every component/actor rendered in the diagram, with its trust zone.</caption>
+        <thead>
+          <tr><th scope="col">Node ID</th><th scope="col">Name</th><th scope="col">Zone</th><th scope="col">Secret-holding</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>browser</td><td>Browser (Josh only)</td><td>Untrusted network</td><td>No</td></tr>
+          <tr><td>anon</td><td>Anonymous caller</td><td>Untrusted network</td><td>No</td></tr>
+          <tr><td>frontend</td><td>Web app (frontend)</td><td>Deployment platform</td><td>No</td></tr>
+          <tr><td>backend</td><td>Backend API layer</td><td>Deployment platform</td><td>Yes</td></tr>
+          <tr><td>metadata</td><td>Curated metadata file</td><td>Deployment platform</td><td>No</td></tr>
+          <tr><td>pat-env</td><td>GitHub PAT</td><td>Env var store (runtime secret copy)</td><td>Yes</td></tr>
+          <tr><td>bearer-env</td><td>Bearer token</td><td>Env var store (runtime secret copy)</td><td>Yes</td></tr>
+          <tr><td>github</td><td>GitHub.com</td><td>External API</td><td>No</td></tr>
+          <tr><td>phasedev</td><td>Phase.dev</td><td>Secret broker</td><td>Yes</td></tr>
+          <tr><td>josh-deploy</td><td>Josh (operator)</td><td>(actor, no zone)</td><td>No</td></tr>
+        </tbody>
+      </table>
+
+      <table class="graph-table">
+        <caption>Edges — every connection rendered in the diagram, in source order.</caption>
+        <thead>
+          <tr><th scope="col">From</th><th scope="col">To</th><th scope="col">Type</th><th scope="col">Direction</th><th scope="col">Label</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Browser (Josh only)</td><td>Web app (frontend)</td><td>Sync request/response (bearer token)</td><td>Bidirectional</td><td>HTTPS + bearer token</td></tr>
+          <tr><td>Web app (frontend)</td><td>Backend API layer</td><td>Sync request/response (bearer token)</td><td>Bidirectional</td><td>Same-origin API call</td></tr>
+          <tr><td>Backend API layer</td><td>Curated metadata file</td><td>Build-bundled read (not network-crossing)</td><td>Forward</td><td>Build-bundled read</td></tr>
+          <tr><td>Backend API layer</td><td>GitHub.com</td><td>Read-only GitHub API (PAT, batched GraphQL)</td><td>Bidirectional</td><td>Batched GraphQL (PAT, read-only)</td></tr>
+          <tr><td>Backend API layer</td><td>GitHub PAT</td><td>Manual secret sync (Josh-initiated, deploy time)</td><td>Backward</td><td>Reads secrets at boot</td></tr>
+          <tr><td>Backend API layer</td><td>Bearer token</td><td>Manual secret sync (Josh-initiated, deploy time)</td><td>Backward</td><td>(no label rendered — same edge type as row above)</td></tr>
+          <tr><td>Phase.dev</td><td>GitHub PAT</td><td>Manual secret sync (Josh-initiated, deploy time)</td><td>Forward</td><td>Manual sync (deploy time)</td></tr>
+          <tr><td>Phase.dev</td><td>Bearer token</td><td>Manual secret sync (Josh-initiated, deploy time)</td><td>Forward</td><td>(no label rendered — same edge type as row above)</td></tr>
+          <tr><td>Josh (operator)</td><td>Phase.dev</td><td>Manual secret sync (Josh-initiated, deploy time)</td><td>Forward</td><td>Phase.dev CLI/session</td></tr>
+          <tr><td>Anonymous caller</td><td>Web app (frontend)</td><td>Build-bundled read (not network-crossing) — styling reused for untrusted-attempt path</td><td>Forward</td><td>(no label rendered)</td></tr>
+        </tbody>
+      </table>
+      </details>
+    </section>
+
+    <div class="footnote" role="note">
+      <strong>Notes:</strong> No database exists (curated metadata is git-tracked, not runtime-writable).
+      No write path exists from this app back to GitHub. Bearer token and GitHub PAT have no
+      rotation/expiry for MVP — accepted risk, owner Josh (threat-model.md §6). Preview-deployment
+      credential isolation (ADR-0002) is a required pre-deploy gate, not yet implementation-verified.
+      Deployment platform choice (Vercel vs. Cloudflare) is left open to Stage 5; either satisfies
+      this topology unchanged (architecture.md §5).
+    </div>
+    </main>
+  </body>
+</html>

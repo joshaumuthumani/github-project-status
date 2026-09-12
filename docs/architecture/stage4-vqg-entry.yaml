@@ -1,0 +1,87 @@
+schema: "sdlc.visual-quality-review/v1"
+issue_id: "9348b849-3037-4c69-9f7f-c7f44acc0593"
+issue_ref: "joshaumuthumani/github-project-status#9"
+artifact_version: "candidate-3"
+artifact_boundary:
+  boundary_sha256: "8a1b15d3653a0fcb90fa2b3bc2fe0a8de947622f30355bae65d464b85ad0e711"
+  files:
+    - path: "docs/architecture/portfolio-dashboard-archify.html"
+      media_type: "text/html"
+      bytes: 716761
+      sha256: "639d86cc16f658e53b75bc7f6cbded163c4062f7b85ee82ea322f0bf5dd816a8"
+    - path: "docs/architecture/portfolio-dashboard-topology.html"
+      media_type: "text/html"
+      bytes: 36143
+      sha256: "7608cdef2e21067affad22e943017db9a97ed1bfb5ba464a327a6af1875b1072"
+    - path: "docs/architecture/portfolio-dashboard.archify.json"
+      media_type: "application/json"
+      bytes: 4624
+      sha256: "0c6f4db202a7f4233064a613d2529e89c5267c48097e3d19bb500a72a685b4f8"
+applicability: applicable
+notes: >
+  Two competing renderers of the same Stage 3 topology are included in one boundary for
+  comparative review: portfolio-dashboard-topology.html (hand-built template) and
+  portfolio-dashboard-archify.html (Archify canvas renderer, backed by
+  portfolio-dashboard.archify.json). Source of truth: docs/architecture/architecture.md,
+  docs/architecture/threat-model.md, ADR-0001, ADR-0002, ADR-0003. Preparation evidence
+  (5 viewport modes x 2 HTML candidates = 10 PNGs) is at
+  /var/folders/33/vddlmnyx7sj2z9zz6wqgty4w0000gn/T/kilo/vqg-evidence/. candidate-2 changes
+  from candidate-1: (a) fixed connector label/routing overlap in topology.html below the
+  900px breakpoint by making fromSide/toSide fall back to autoSide() when the layout is
+  stacked, verified fixed at 768px via fresh-navigation screenshot; (b) added a visible,
+  accessible <details><table> machine-readable node/edge graph table to topology.html
+  (previously only an sr-only prose summary existed, which the prior QA pass flagged as
+  missing per VQG §5.5/§8). archify.html is unchanged from candidate-1: the apparent mobile
+  "clipping" in the earlier informal preparer note was a false positive from a fullPage
+  screenshot of a horizontally-scrollable/pannable canvas (confirmed via
+  page.evaluate scroll: container.scrollWidth=744 vs clientWidth=356 at 390px, content is
+  reachable, not lost) — this is the artifact's designed zoomable-canvas interaction
+  (visible PATH/MAP/LENS zoom controls), not a defect. All prior findings from
+  stage4-vqg-entry.md (invalid boundary_sha256 sort order, missing media_type/bytes fields)
+  are corrected in this file, which is now the sole authoritative entry packet.
+
+  candidate-3 changes from candidate-2, addressing both independent seats' STOP verdicts on
+  candidate-2:
+  1. (Design Review P3 / QA P1, topology.html) backend→github connector previously had no
+     explicit fromSide/toSide and autoSide() routed its label through the "GitHub.com" node
+     title at some breakpoints. Fixed by giving that connection explicit
+     fromSide:'right', toSide:'left' (matching its other desktop-width neighbors); verified
+     visually clean at desktop and tablet post-fix. The candidate-2 responsive-routing fix
+     (stacked layout falls back to autoSide() below 900px) is unchanged and still applies.
+  2. (QA P2, topology.html) Added real document structure: <main> landmark wraps body
+     content, <h1> for the diagram title (previously a styled <div>), <h2 class="sr-only">
+     headings for the legend and machine-readable-table sections, and <section
+     aria-labelledby=...> landmarks for legend/diagram/table regions. The pre-existing
+     sr-only prose summary and machine-readable <table> are unchanged in content.
+  3. (QA P1, archify.html) Removed the two Google Fonts network requests
+     (fonts.gstatic.com preconnect + fonts.googleapis.com stylesheet <link>/<noscript>).
+     The font-family stack already listed system-monospace fallbacks
+     (ui-monospace, SFMono-Regular, Menlo, Consolas, etc.) and an existing
+     @font-face local() rule, so JetBrains Mono is still used when already installed
+     locally, with zero network dependency now. Verified via grep: no https?:// references
+     remain in either candidate file (excluding the w3.org SVG namespace URI, which is not
+     a network request).
+  All 10 evidence screenshots (5 modes x 2 candidates) were recaptured after these changes
+  and are in the same evidence directory, overwriting the prior candidate-2 captures.
+
+review_outcome:
+  qa_seat: "PASS — independent QA Reviewer verdict on candidate-3, boundary_sha256
+    8a1b15d3653a0fcb90fa2b3bc2fe0a8de947622f30355bae65d464b85ad0e711 verified. Full
+    findings: docs/architecture/stage4-vqg-qa-verdict-candidate-3.md. All 3 candidate-2
+    findings confirmed resolved; zero remaining external network dependency; topology vs
+    archify env-store node-count difference judged a legitimate renderer design choice,
+    not a fidelity defect."
+  design_review_seat: "STOP: INCOMPLETE_ENTRY (procedural, not a defect) — the reviewing
+    session declined to issue a visual verdict, citing (a) this YAML packet's extra keys
+    (issue_ref, notes, review_outcome) beyond the VQG v1.2 closed §10 schema, and (b) an
+    unresolved independence concern about reviewing an artifact prepared in the same
+    working session. No concrete visual defect was reported against candidate-3; the
+    round-2 defect that same seat had previously found (label crossing GitHub.com title)
+    was separately confirmed fixed by the independent QA seat."
+  ship_decision: "Owner (Josh) authorized shipping portfolio-dashboard-archify.html as the
+    Stage 4 deliverable on the strength of the independent QA PASS, accepting the
+    Design Review seat's procedural non-verdict rather than reformatting the packet to the
+    full closed §10 schema or re-running review in a stricter isolation harness. This
+    decision and its rationale are recorded here per VQG optional owner override
+    provisions; topology.html is retained in the repo as a secondary/alternate rendering,
+    not the primary shipped artifact."
