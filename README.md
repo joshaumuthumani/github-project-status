@@ -10,8 +10,8 @@ Idea brief: `~/Brain/Ideas/github-project-status.md`
 
 - **Tier:** load-bearing. Every pipeline stage runs; none are skipped.
 - **Stage:** 6 complete (rapid prototype — batched-GraphQL spike confirmed ADR-0003, no design
-  change). Stage 4 (architecture diagram) Visual Quality Gate review is running in parallel.
-  Stage 7 (PRD/plan) is next.
+  change). Stage 4 (architecture diagram) also complete — VQG-reviewed, shipped as
+  `docs/architecture/portfolio-dashboard-archify.html` (#9, PR #14). Stage 7 (PRD/plan) is next.
 
 Not FlowDesk (personal PM/planning) and not the parked `agent-dashboard` idea (general-purpose
 agent/workflow dashboard). See the idea brief's Boundaries section.
