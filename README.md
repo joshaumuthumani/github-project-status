@@ -1,5 +1,6 @@
 # projects-status
 
+
 A live, GitHub-backed portfolio-status dashboard for Josh's repositories: a portfolio rollup
 (what's happening across ~27 repos) and a per-repository operational view (open PRs/issues,
 activity, contributors, bots), backed by GitHub as the live source plus a small curated local
