@@ -1,4 +1,6 @@
 # projects-status
+<!-- pilot: disposable baseline check for issue #4, safe to remove after merge -->
+
 
 A live, GitHub-backed portfolio-status dashboard for Josh's repositories: a portfolio rollup
 (what's happening across ~27 repos) and a per-repository operational view (open PRs/issues,
