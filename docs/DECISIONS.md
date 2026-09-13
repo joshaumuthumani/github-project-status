@@ -295,3 +295,91 @@ before, while allowing exactly one new capability: committing to this repo's own
 **Owner:** Josh Muthumani.
 
 ---
+
+## 2026-09-13 — UI design direction: Impeccable (of 5 compared)
+
+**Decision:** The portfolio table UI ships in the "Impeccable" style — systematic, audit-grade
+craft (restrained single accent, deterministic hierarchy, AA contrast) — chosen over 4
+alternatives built and compared side by side per the mandatory design-style-matrix gate:
+Taste (premium anti-generic; the skill's own scope note excludes dashboards/data tables, so
+this column was an adapted-by-judgment approximation, not an in-scope skill run), Google
+Stitch (Material-leaning; approximated locally rather than generated live in Stitch, to avoid
+creating a persisted cloud project for a disposable comparison), UI/UX Pro Max (shadcn/Radix
+conventions; the skill plugin is cached but not enabled in this session, so also an
+approximation, not the live skill), and Raw Front-End (unaided baseline).
+
+**Context:** First UI-design request for this project's one real screen (the repo-status
+table with inline metadata editing). All 5 previews live at
+`design-previews/portfolio-dashboard/*.html`. The initial Impeccable build then went through
+an `/impeccable critique` pass (18/32 heuristic score) that caught two real defects before
+the production build started: a stale-row background wash at 5.5% opacity (functionally
+invisible, directly failing PRD `SC-2`'s "distinguishable at a glance" requirement) and
+Active/Dormant badges differing only by hue with equal visual weight. Both were fixed and
+re-verified (contrast ratios computed directly, not eyeballed) before Stage 9 build started.
+
+**Rationale:** This is a single-user, dense data-scanning tool (PRD §3), not a marketing
+surface — restraint and fast legibility outweigh personality. Two of the five columns weren't
+produced by their canonical skills (noted above); re-running them properly would need the
+`ui-ux-pro-max` plugin enabled for this session and either accepting `design-taste-frontend`'s
+dashboard exclusion or finding a dashboard-appropriate "taste" skill instead.
+
+**Consequences:** `app/page.module.css` and `app/globals.css` carry the finalized token set
+(`--stale-wash: #f1eae1`, `--active-fill`/`--active-ink` tonal badge, hairline dividers at a
+verified-visible weight). If a future session wants the UI/UX Pro Max or Taste columns done
+properly, that's a re-run, not a re-litigation of the Impeccable pick itself.
+
+**Owner:** Josh Muthumani.
+
+---
+
+## 2026-09-13 — Auth session mechanism: login form + httpOnly cookie
+
+**Decision:** The dashboard's single shared bearer token (FR-8) reaches the browser via a
+one-field login page that POSTs to `/api/login`, which sets an httpOnly, `sameSite: strict`
+session cookie; `proxy.ts` (Next.js's current middleware convention) checks that cookie on
+every route, pages included — not just API calls.
+
+**Context:** `architecture.md` §4 specifies the trust boundary (bearer token, `Authorization`
+header, no OAuth/session) but never specifies the concrete client-side mechanism for a full
+page navigation, which can't attach a custom header. Asked Josh directly rather than
+inventing an auth-shaped mechanism silently; the alternative considered was sessionStorage +
+manual header attachment on API calls only, which would leave the page shell itself ungated
+(FR-8 requires gating "including default/health routes").
+
+**Rationale:** httpOnly cookie is not readable by JS (smaller XSS exposure than
+sessionStorage) and satisfies "every route gated" with one mechanism instead of two
+(page-level vs. API-level). No expiry is set on the cookie, matching the already-accepted
+long-lived-static-token residual risk (`docs/PRD.md` §8).
+
+**Consequences:** `lib/auth.ts` holds the shared `SESSION_COOKIE` name and the constant-time
+comparison used by both `proxy.ts` and `/api/login`. No logout endpoint exists (not requested,
+matches the PRD's accepted no-rotation risk) — if that's wanted later it's a small addition,
+not a redesign.
+
+**Owner:** Josh Muthumani.
+
+---
+
+## 2026-09-13 — Stage 9: MVP build merged (Phases 1-4), Phase 0/5 pending Josh's infra
+
+**Decision:** N/A (status entry, not a decision) — recorded here because it changes what a
+future session should assume is true, and README's stage line is the other place this must
+stay in sync.
+
+**Context:** PR #28 merged Phases 1-4 of the Stage 7 plan (read-only portfolio view, curated
+metadata read side, stale-repo treatment, in-app metadata editing) with 52 passing unit tests
+and two code-review passes. Issue #21 (MVP umbrella) was reopened after merge auto-closed it
+prematurely — its own success criteria require Phase 5 verification, which hasn't happened.
+Issues #22 (Phase 0: Vercel project, Phase.dev secret wiring, live PAT minting) and #27
+(Phase 5: live verification against a real deployment) remain open and are explicitly blocked
+on Josh's own account provisioning — no code-only path exists to close them.
+
+**Consequences:** A future session picking this up should check #21/#22/#27's live state
+before assuming anything about deployment status; nothing in this repo is deployed yet. The
+staleness threshold used in `lib/staleness.ts` (30 days) is an implementation-time default,
+not a doc-sourced or Josh-confirmed value — flagged in code, worth confirming if it ever
+feels wrong in practice.
+
+**Owner:** Josh Muthumani.
+
+---
