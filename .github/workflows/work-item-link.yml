@@ -1,0 +1,39 @@
+name: work-item-link
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR body for linkage
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Extract issue number from "Resolves #<num>" or similar pattern
+          ISSUE_NUM=$(echo "$PR_BODY" | grep -oE "(Resolves|Fixes|Closes|Addresses) #[0-9]+" | head -1 | grep -oE "[0-9]+")
+          if [ -z "$ISSUE_NUM" ]; then
+            echo "::error::No valid work-item link found. Must contain 'Resolves #<num>'."
+            exit 1
+          fi
+
+          echo "Found linked issue: #$ISSUE_NUM"
+
+          # Verify issue exists and is OPEN
+          ISSUE_STATE=$(gh issue view "$ISSUE_NUM" --repo "$REPO" --json state -q .state)
+          if [ "$ISSUE_STATE" != "OPEN" ]; then
+            echo "::error::Linked issue #$ISSUE_NUM is $ISSUE_STATE, must be OPEN."
+            exit 1
+          fi
+
+          # Verify acceptance criteria are present in body
+          ISSUE_BODY=$(gh issue view "$ISSUE_NUM" --repo "$REPO" --json body -q .body)
+          if ! echo "$ISSUE_BODY" | grep -iq "acceptance criteria"; then
+            echo "::error::Linked issue #$ISSUE_NUM is missing testable acceptance criteria."
+            exit 1
+          fi
+          
+          echo "Work item linkage is valid."

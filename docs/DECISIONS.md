@@ -383,3 +383,11 @@ feels wrong in practice.
 **Owner:** Josh Muthumani.
 
 ---
+
+## 2026-09-13 — Stage 9.5 Webhook Clarification
+
+**Decision:** The "deferred webhook registration" recorded on 2026-09-11 is void. No repository-level webhook is pending or required.
+
+**Context:** The previous entry assumed we had to build a custom webhook endpoint in this repository to sync our GitHub Project. However, the `GH-KiloCode` GitHub App handles Stage 9.5 continuous sync globally. Its installation on this repository automatically pipes events to its central endpoint. 
+
+**Consequences:** Story #38 was closed as invalid. The Stage 9.5 continuous sync is active via the GitHub App integration.
