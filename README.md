@@ -9,11 +9,14 @@ metadata file for what GitHub can't know (tags, purpose, production status).
 Idea brief: `~/Brain/Ideas/github-project-status.md`
 
 - **Tier:** load-bearing. Every pipeline stage runs; none are skipped.
-- **Stage:** 7 in progress — PRD approved and merged (#16, PR #18: `docs/PRD.md`). Project plan
-  drafted (`docs/planning/2026-09-12-stage7-project-plan.md`), pending Josh's approval before
-  Stage 8 task decomposition. Stage 6 (rapid prototype — batched-GraphQL spike confirmed
-  ADR-0003) and Stage 4 (architecture diagram, VQG-reviewed, `docs/architecture/portfolio-dashboard-archify.html`,
-  #9/PR #14) are complete.
+- **Stage:** 9 in progress — MVP build. Phases 1-4 of the Stage 7 plan (read-only portfolio
+  view, curated metadata, stale-repo treatment, in-app metadata editing) are merged (#21, PR
+  #28) with a passing unit-test suite and two code-review passes. **Nothing is deployed yet:**
+  Phase 0 (#22 — Vercel project, Phase.dev secret wiring, PAT minting) and Phase 5 (#27 — live
+  verification, blocked on #22) are open and need Josh's own account provisioning; no code-only
+  path exists to close them. Design direction (Impeccable) and the auth session mechanism
+  (login form + httpOnly cookie) are recorded in `docs/DECISIONS.md`. Stages 1-8 (init through
+  task decomposition) are complete.
 
 Not FlowDesk (personal PM/planning) and not the parked `agent-dashboard` idea (general-purpose
 agent/workflow dashboard). See the idea brief's Boundaries section.
