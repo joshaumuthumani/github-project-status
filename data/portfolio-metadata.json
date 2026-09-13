@@ -1,0 +1,9 @@
+{
+  "repos": {
+    "joshaumuthumani/github-project-status": {
+      "status": "active",
+      "purpose": "Portfolio dashboard (this repo)",
+      "production": false
+    }
+  }
+}

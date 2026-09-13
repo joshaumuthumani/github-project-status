@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Status — UI/UX Pro Max</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090b; --surface: #18181b; --border: #27272a; --text: #fafafa; --text-muted: #a1a1aa;
+    --accent: #8b5cf6; --accent-fg: #ffffff; --stale: #f59e0b; --danger: #ef4444;
+  }
+  * { box-sizing: border-box; font-family: "Geist", ui-sans-serif, sans-serif; }
+  body { margin: 0; background: var(--bg); color: var(--text); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 28px 100px; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0; }
+  .meta { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .btn {
+    background: var(--accent); color: var(--accent-fg); border: none; font-size: 13px; font-weight: 500;
+    padding: 8px 16px; border-radius: 6px; cursor: pointer;
+  }
+  .btn:hover { opacity: 0.9; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  thead th { text-align: left; font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th.num, td.num { text-align: right; }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #202023; }
+  td { padding: 12px 14px; font-size: 13px; vertical-align: middle; }
+  .repo { font-weight: 500; }
+  .purpose { color: var(--text-muted); font-size: 12px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 4px; border: 1px solid var(--border); }
+  .badge.active { color: #4ade80; border-color: #14532d; }
+  .badge.dormant { color: var(--text-muted); }
+  .badge.secondary { background: #27272a; color: var(--text-muted); border: none; margin-left: 4px; }
+  .num { font-variant-numeric: tabular-nums; }
+  .stale-row td { opacity: 0.65; }
+  .kebab {
+    background: none; border: 1px solid var(--border); color: var(--text-muted); border-radius: 6px;
+    width: 26px; height: 26px; cursor: pointer; font-size: 14px;
+  }
+  .kebab:hover { color: var(--text); border-color: var(--accent); }
+  .err { color: var(--danger); font-size: 12px; }
+  footer.note { margin-top: 20px; font-size: 11px; color: var(--text-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>GitHub Portfolio Status</h1>
+      <div class="meta">Fetched 2 minutes ago · 7 of 8 repos loaded</div>
+    </div>
+    <button class="btn">Refresh</button>
+  </header>
+
+  <table>
+    <thead>
+      <tr><th>Repository</th><th>Status</th><th class="num">PRs</th><th class="num">Issues</th><th class="num">Last Activity</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="repo">hermes-stack</div><div class="purpose">Core agent runtime</div></td>
+        <td><span class="badge active">Active</span><span class="badge secondary">Production</span></td>
+        <td class="num">3</td><td class="num">12</td><td class="num">2h ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">chronicle</div><div class="purpose">SDLC pipeline tooling</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td class="num">1</td><td class="num">4</td><td class="num">1d ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr class="stale-row">
+        <td><div class="repo">ledger</div><div class="purpose">Accounting experiment</div></td>
+        <td><span class="badge dormant">Dormant</span></td>
+        <td class="num">0</td><td class="num">0</td><td class="num">94d ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">trove</div><div class="purpose">Personal knowledge base</div></td>
+        <td><span class="badge active">Active</span><span class="badge secondary">Production</span></td>
+        <td class="num">2</td><td class="num">7</td><td class="num">6h ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">projects-status</div><div class="purpose">This dashboard</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td class="num">1</td><td class="num">2</td><td class="num">3h ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr class="stale-row">
+        <td><div class="repo">omniroute</div><div class="purpose">Routing config service</div></td>
+        <td><span class="badge dormant">Dormant</span><span class="badge secondary">Production</span></td>
+        <td class="num">0</td><td class="num">1</td><td class="num">61d ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr class="stale-row">
+        <td><div class="repo">weekend-experiment-42</div><div class="purpose">Spike, unused</div></td>
+        <td><span class="badge dormant">Dormant</span></td>
+        <td class="num" colspan="3"><span class="err">failed to load live data</span></td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">brain-vault-sync</div><div class="purpose">Notes sync tool</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td class="num">4</td><td class="num">9</td><td class="num">30m ago</td>
+        <td><button class="kebab">⋮</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <footer class="note">Style: UI/UX Pro Max, approximated from documented conventions (shadcn "New York" table, Geist, dark-mode-first, Radix-style kebab menu) — the ui-ux-pro-max skill plugin is cached but not enabled in this session, so this column was not produced by the live skill.</footer>
+</div>
+</body>
+</html>

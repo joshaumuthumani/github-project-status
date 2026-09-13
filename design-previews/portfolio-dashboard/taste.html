@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Status — Taste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #fbfaf5;
+    --ink: #22201c;
+    --ink-soft: #6f6a60;
+    --line: #e7e2d6;
+    --accent: #0f6e5d;
+    --accent-ink: #ffffff;
+    --stale: #a0672a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: "Work Sans", sans-serif; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 72px 40px 120px; }
+  header { display: grid; grid-template-columns: 2fr 1fr; align-items: end; gap: 24px; margin-bottom: 40px; }
+  h1 {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 40px; letter-spacing: -0.02em;
+    margin: 0; line-height: 1.05;
+  }
+  .meta { color: var(--ink-soft); font-size: 14px; margin-top: 10px; }
+  .refresh-col { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+  .refresh {
+    background: var(--accent); color: var(--accent-ink); border: none; font: 600 14px "Work Sans", sans-serif;
+    padding: 12px 22px; border-radius: 999px; cursor: pointer; transition: transform 180ms cubic-bezier(.16,1,.3,1);
+  }
+  .refresh:hover { transform: translateY(-2px); }
+  .refresh:active { transform: scale(0.97); }
+  .rows { border-top: 1px solid var(--line); margin-top: 8px; }
+  .row {
+    display: grid; grid-template-columns: 2.2fr 1fr 1fr 0.7fr 0.7fr 1fr 0.6fr;
+    align-items: center; gap: 16px; padding: 20px 4px; border-bottom: 1px solid var(--line);
+    transition: opacity 200ms ease;
+  }
+  .row.stale { opacity: 0.62; }
+  .repo { font-weight: 600; font-size: 16px; }
+  .purpose { color: var(--ink-soft); font-size: 13px; margin-top: 2px; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+  .badge.active { background: #e4f2ee; color: var(--accent); }
+  .badge.dormant { background: #f1efe8; color: var(--ink-soft); }
+  .stale-tag { display: block; font-size: 10px; font-weight: 700; color: var(--stale); letter-spacing: 0.06em; margin-top: 4px; }
+  .prod { font-size: 11px; font-weight: 600; color: var(--accent); }
+  .num { font-family: "Space Grotesk", sans-serif; font-weight: 500; font-size: 20px; text-align: right; font-variant-numeric: tabular-nums; }
+  .num-label { display: block; font-family: "Work Sans", sans-serif; font-size: 10px; color: var(--ink-soft); font-weight: 500; text-align: right; }
+  .activity { text-align: right; font-size: 13px; color: var(--ink-soft); }
+  .err { color: #a5402a; font-size: 13px; font-weight: 500; text-align: right; }
+  .edit { background: none; border: 1px solid var(--line); color: var(--ink); font: 500 12px "Work Sans", sans-serif; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .edit:hover { border-color: var(--accent); color: var(--accent); }
+  footer.note { margin-top: 32px; font-size: 12px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Portfolio Status</h1>
+      <div class="meta">Fetched 2 minutes ago, 7 of 8 repos loaded</div>
+    </div>
+    <div class="refresh-col">
+      <button class="refresh">Refresh</button>
+    </div>
+  </header>
+
+  <div class="rows">
+    <div class="row">
+      <div><div class="repo">hermes-stack</div><div class="purpose">Core agent runtime</div></div>
+      <div><span class="badge active">Active</span></div>
+      <div><span class="prod">PRODUCTION</span></div>
+      <div><span class="num">3</span><span class="num-label">PRs</span></div>
+      <div><span class="num">12</span><span class="num-label">Issues</span></div>
+      <div class="activity">2h ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row">
+      <div><div class="repo">chronicle</div><div class="purpose">SDLC pipeline tooling</div></div>
+      <div><span class="badge active">Active</span></div>
+      <div></div>
+      <div><span class="num">1</span><span class="num-label">PRs</span></div>
+      <div><span class="num">4</span><span class="num-label">Issues</span></div>
+      <div class="activity">1d ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row stale">
+      <div><div class="repo">ledger</div><div class="purpose">Accounting experiment</div></div>
+      <div><span class="badge dormant">Dormant</span><span class="stale-tag">STALE</span></div>
+      <div></div>
+      <div><span class="num">0</span><span class="num-label">PRs</span></div>
+      <div><span class="num">0</span><span class="num-label">Issues</span></div>
+      <div class="activity">94d ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row">
+      <div><div class="repo">trove</div><div class="purpose">Personal knowledge base</div></div>
+      <div><span class="badge active">Active</span></div>
+      <div><span class="prod">PRODUCTION</span></div>
+      <div><span class="num">2</span><span class="num-label">PRs</span></div>
+      <div><span class="num">7</span><span class="num-label">Issues</span></div>
+      <div class="activity">6h ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row">
+      <div><div class="repo">projects-status</div><div class="purpose">This dashboard</div></div>
+      <div><span class="badge active">Active</span></div>
+      <div></div>
+      <div><span class="num">1</span><span class="num-label">PRs</span></div>
+      <div><span class="num">2</span><span class="num-label">Issues</span></div>
+      <div class="activity">3h ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row stale">
+      <div><div class="repo">omniroute</div><div class="purpose">Routing config service</div></div>
+      <div><span class="badge dormant">Dormant</span><span class="stale-tag">STALE</span></div>
+      <div><span class="prod">PRODUCTION</span></div>
+      <div><span class="num">0</span><span class="num-label">PRs</span></div>
+      <div><span class="num">1</span><span class="num-label">Issues</span></div>
+      <div class="activity">61d ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row stale">
+      <div><div class="repo">weekend-experiment-42</div><div class="purpose">Spike, unused</div></div>
+      <div><span class="badge dormant">Dormant</span><span class="stale-tag">STALE</span></div>
+      <div></div>
+      <div class="err" style="grid-column: span 3;">failed to load live data</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+    <div class="row">
+      <div><div class="repo">brain-vault-sync</div><div class="purpose">Notes sync tool</div></div>
+      <div><span class="badge active">Active</span></div>
+      <div></div>
+      <div><span class="num">4</span><span class="num-label">PRs</span></div>
+      <div><span class="num">9</span><span class="num-label">Issues</span></div>
+      <div class="activity">30m ago</div>
+      <div style="text-align:right"><button class="edit">Edit</button></div>
+    </div>
+  </div>
+  <footer class="note">Style: Taste, adapted by judgment (this skill's own scope excludes dashboards/data tables; principles applied without the skill's in-scope guarantee).</footer>
+</div>
+</body>
+</html>

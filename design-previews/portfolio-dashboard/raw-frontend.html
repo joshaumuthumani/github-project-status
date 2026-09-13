@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Status — Raw Front-End</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 40px; color: #222; }
+  h1 { font-size: 22px; }
+  .meta { color: #666; font-size: 13px; margin-bottom: 16px; }
+  button { padding: 6px 12px; font-size: 14px; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; margin-top: 12px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; font-size: 14px; }
+  th { background: #eee; }
+  .active { color: green; font-weight: bold; }
+  .dormant { color: gray; }
+  .stale { background: #fff8e1; }
+  .err { color: red; }
+  a.edit { color: #2563eb; text-decoration: underline; cursor: pointer; font-size: 13px; }
+</style>
+</head>
+<body>
+  <h1>GitHub Portfolio Status</h1>
+  <div class="meta">Fetched 2 minutes ago (7 of 8 repos loaded)</div>
+  <button>Refresh</button>
+
+  <table>
+    <tr>
+      <th>Repository</th><th>Purpose</th><th>Status</th><th>Production</th>
+      <th>Open PRs</th><th>Open Issues</th><th>Last Activity</th><th></th>
+    </tr>
+    <tr>
+      <td>hermes-stack</td><td>Core agent runtime</td><td class="active">Active</td><td>Yes</td>
+      <td>3</td><td>12</td><td>2h ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr>
+      <td>chronicle</td><td>SDLC pipeline tooling</td><td class="active">Active</td><td>No</td>
+      <td>1</td><td>4</td><td>1d ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr class="stale">
+      <td>ledger</td><td>Accounting experiment</td><td class="dormant">Dormant</td><td>No</td>
+      <td>0</td><td>0</td><td>94d ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr>
+      <td>trove</td><td>Personal knowledge base</td><td class="active">Active</td><td>Yes</td>
+      <td>2</td><td>7</td><td>6h ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr>
+      <td>projects-status</td><td>This dashboard</td><td class="active">Active</td><td>No</td>
+      <td>1</td><td>2</td><td>3h ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr class="stale">
+      <td>omniroute</td><td>Routing config service</td><td class="dormant">Dormant</td><td>Yes</td>
+      <td>0</td><td>1</td><td>61d ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr class="stale">
+      <td>weekend-experiment-42</td><td>Spike, unused</td><td class="dormant">Dormant</td><td>No</td>
+      <td colspan="3" class="err">failed to load live data</td><td><a class="edit">Edit</a></td>
+    </tr>
+    <tr>
+      <td>brain-vault-sync</td><td>Notes sync tool</td><td class="active">Active</td><td>No</td>
+      <td>4</td><td>9</td><td>30m ago</td><td><a class="edit">Edit</a></td>
+    </tr>
+  </table>
+  <p style="color:#888; font-size:12px; margin-top:16px;">Style: Raw Front-End — unassisted baseline, no design skill applied.</p>
+</body>
+</html>
