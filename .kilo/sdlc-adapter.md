@@ -1,0 +1,27 @@
+# SDLC Project Adapter
+
+**Tier**: `load-bearing` (Every pipeline stage runs; none are skipped)
+**Current Stage**: 9 (MVP build), pending operational readiness (webhook, verification)
+**Authoritative Intent Store**: GitHub Project #9 ("GitHub Project Status")
+
+## Required Project Commands
+- `/sdlc-status` — Project local status overlay
+- `/sdlc-readiness` — Project readiness check
+- `/phase-0-entry` — Entry for Phase 0 environment setup
+
+## Approved Skips & Deferred Integrations
+- Graphify lifecycle: explicitly skipped for now (documentation-only/no application code originally, but now app code exists).
+- GitHub Webhook (Stage 9.5 continuous sync): deferred follow-up story explicitly noted. Manual reconciliation required.
+
+## Durable Evidence
+- README status: `README.md`
+- Decisions log: `docs/DECISIONS.md`
+- Test pass evidence: (CI/CD links)
+
+### Stage 9.5 Interim Manual Reconciliation Workflow
+Before PR creation and after merge/close, reconcile:
+1. GitHub issue status
+2. Parent-child hierarchy
+3. PR link
+4. Project fields (Tier, Stage, Blocked Reason)
+Preserve human-owned fields. This remains active until the signed webhook automation is implemented.

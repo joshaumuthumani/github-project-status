@@ -10,8 +10,8 @@ criteria before calling work done.
 ## Workflow
 
 This repo follows the canonical SDLC pipeline at `~/Brain/System/SDLC-Process/sdlc-pipeline.md`.
-Current stage and tier are recorded in `README.md`; decisions are logged in
-`docs/DECISIONS.md`. Do not skip a pipeline stage without recording why.
+Current stage and tier are recorded in `.kilo/sdlc-adapter.md` and `README.md`; decisions are logged in
+`docs/DECISIONS.md`. Do not skip a pipeline stage without recording why. Agents MUST inspect `.kilo/sdlc-adapter.md` to determine the current stage and tier before accepting or performing any work.
 
 - Branching and PR convention: see `README.md` § Contributing.
 - Review gate: `docs/review-policy.md`.
