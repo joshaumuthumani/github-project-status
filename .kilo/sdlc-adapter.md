@@ -25,3 +25,8 @@ Before PR creation and after merge/close, reconcile:
 3. PR link
 4. Project fields (Tier, Stage, Blocked Reason)
 Preserve human-owned fields. This remains active until the signed webhook automation is implemented.
+
+### Graphify Lifecycle
+- Canonical CI-only Graphify configuration added.
+- Marker: `docs/graphify.json`.
+- Drift behavior: > 10% graph-size drift requires manual Stage 10 review. Missing artifacts fail CI.

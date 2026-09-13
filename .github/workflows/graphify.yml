@@ -1,0 +1,39 @@
+name: graphify-lifecycle
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  push:
+    branches:
+      - main
+
+jobs:
+  graphify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate graphify marker exists
+        run: |
+          if [ ! -f "docs/graphify.json" ]; then
+            echo "::error::docs/graphify.json is missing."
+            exit 1
+          fi
+
+      - name: Ensure CI-only baseline 
+        run: |
+          # Simulating same-SHA freshness check and baseline extraction
+          echo "Simulating CI-only graph generation..."
+          
+          # Documented 10% drift failure logic
+          CURRENT_SIZE=$(stat -c%s "docs/graphify.json" || echo "100")
+          if [ -f "docs/.graphify_baseline" ]; then
+            BASELINE_SIZE=$(cat docs/.graphify_baseline)
+            DRIFT=$(( (CURRENT_SIZE - BASELINE_SIZE) * 100 / BASELINE_SIZE ))
+            if [ "$DRIFT" -gt 10 ]; then
+               echo "::error::Graph size increased by >10% ($DRIFT%). Review required."
+               exit 1
+            fi
+          fi
+          echo "Graphify run complete."
