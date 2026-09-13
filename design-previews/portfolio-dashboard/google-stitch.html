@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Status — Google Stitch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans+Text:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #4F46E5;
+    --primary-tonal: #E7E5FB;
+    --on-primary-tonal: #362F9E;
+    --surface: #FFFFFF;
+    --surface-container: #F4F3FB;
+    --on-surface: #1B1B21;
+    --on-surface-variant: #605E6B;
+    --outline: #E2E0EC;
+    --tertiary-tonal: #FBEEDB;
+    --on-tertiary-tonal: #8A5A11;
+  }
+  * { box-sizing: border-box; font-family: "Google Sans Text", Roboto, sans-serif; }
+  body { margin: 0; background: var(--surface-container); color: var(--on-surface); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 32px 100px; }
+  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  h1 { font-size: 24px; font-weight: 500; margin: 0; }
+  .meta { font-size: 13px; color: var(--on-surface-variant); margin-top: 4px; }
+  .fab {
+    background: var(--primary); color: white; border: none; font-size: 14px; font-weight: 500;
+    padding: 12px 24px; border-radius: 100px; cursor: pointer; box-shadow: 0 2px 6px rgba(79,70,229,0.35);
+    transition: box-shadow 150ms ease;
+  }
+  .fab:hover { box-shadow: 0 4px 12px rgba(79,70,229,0.45); }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .card {
+    background: var(--surface); border-radius: 16px; padding: 20px; border: 1px solid var(--outline);
+    transition: box-shadow 150ms ease;
+  }
+  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .card.stale { background: var(--surface-container); }
+  .repo-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .repo { font-weight: 500; font-size: 16px; }
+  .purpose { color: var(--on-surface-variant); font-size: 13px; margin-top: 2px; }
+  .chip {
+    display: inline-flex; align-items: center; font-size: 12px; font-weight: 500; padding: 4px 12px;
+    border-radius: 100px; background: var(--primary-tonal); color: var(--on-primary-tonal);
+  }
+  .chip.dormant { background: var(--outline); color: var(--on-surface-variant); }
+  .chip.prod { background: var(--tertiary-tonal); color: var(--on-tertiary-tonal); margin-left: 6px; }
+  .stats { display: flex; gap: 20px; margin-top: 16px; }
+  .stat-value { font-size: 20px; font-weight: 500; }
+  .stat-label { font-size: 11px; color: var(--on-surface-variant); }
+  .footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+  .activity { font-size: 12px; color: var(--on-surface-variant); }
+  .edit-btn {
+    background: var(--primary-tonal); color: var(--on-primary-tonal); border: none; font-size: 12px;
+    font-weight: 500; padding: 6px 14px; border-radius: 100px; cursor: pointer;
+  }
+  .err { color: #B3261E; font-size: 13px; font-weight: 500; margin-top: 12px; }
+  footer.note { margin-top: 24px; font-size: 12px; color: var(--on-surface-variant); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Portfolio Status</h1>
+      <div class="meta">Fetched 2 minutes ago · 7 of 8 repos loaded</div>
+    </div>
+    <button class="fab">Refresh</button>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="repo-row"><div><div class="repo">hermes-stack</div><div class="purpose">Core agent runtime</div></div>
+        <div><span class="chip">Active</span><span class="chip prod">Production</span></div></div>
+      <div class="stats"><div><div class="stat-value">3</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">12</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">2h ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card">
+      <div class="repo-row"><div><div class="repo">chronicle</div><div class="purpose">SDLC pipeline tooling</div></div>
+        <div><span class="chip">Active</span></div></div>
+      <div class="stats"><div><div class="stat-value">1</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">4</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">1d ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card stale">
+      <div class="repo-row"><div><div class="repo">ledger</div><div class="purpose">Accounting experiment</div></div>
+        <div><span class="chip dormant">Dormant · Stale</span></div></div>
+      <div class="stats"><div><div class="stat-value">0</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">0</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">94d ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card">
+      <div class="repo-row"><div><div class="repo">trove</div><div class="purpose">Personal knowledge base</div></div>
+        <div><span class="chip">Active</span><span class="chip prod">Production</span></div></div>
+      <div class="stats"><div><div class="stat-value">2</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">7</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">6h ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card">
+      <div class="repo-row"><div><div class="repo">projects-status</div><div class="purpose">This dashboard</div></div>
+        <div><span class="chip">Active</span></div></div>
+      <div class="stats"><div><div class="stat-value">1</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">2</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">3h ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card stale">
+      <div class="repo-row"><div><div class="repo">omniroute</div><div class="purpose">Routing config service</div></div>
+        <div><span class="chip dormant">Dormant · Stale</span><span class="chip prod">Production</span></div></div>
+      <div class="stats"><div><div class="stat-value">0</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">1</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">61d ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card stale">
+      <div class="repo-row"><div><div class="repo">weekend-experiment-42</div><div class="purpose">Spike, unused</div></div>
+        <div><span class="chip dormant">Dormant · Stale</span></div></div>
+      <div class="err">Failed to load live data</div>
+      <div class="footer-row"><span></span><button class="edit-btn">Edit</button></div>
+    </div>
+    <div class="card">
+      <div class="repo-row"><div><div class="repo">brain-vault-sync</div><div class="purpose">Notes sync tool</div></div>
+        <div><span class="chip">Active</span></div></div>
+      <div class="stats"><div><div class="stat-value">4</div><div class="stat-label">Open PRs</div></div>
+        <div><div class="stat-value">9</div><div class="stat-label">Open Issues</div></div></div>
+      <div class="footer-row"><span class="activity">30m ago</span><button class="edit-btn">Edit</button></div>
+    </div>
+  </div>
+  <footer class="note">Style: Google Stitch, approximated locally (Material 3 tonal-spot tokens, Google Sans, ROUND_TWELVE cards) rather than generated live in Stitch, to keep this a fast disposable comparison instead of creating a persisted cloud project.</footer>
+</div>
+</body>
+</html>

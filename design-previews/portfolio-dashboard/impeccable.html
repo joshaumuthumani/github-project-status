@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Portfolio Status — Impeccable</title>
+<style>
+  :root {
+    --ink: #14171f;
+    --ink-muted: #565b66;
+    --line: rgba(20, 23, 31, 0.14);
+    --line-strong: rgba(20, 23, 31, 0.22);
+    --surface: #ffffff;
+    --canvas: #f6f7f9;
+    --accent: #2a52d6;
+    --accent-hover: #1d3ea3;
+    --accent-wash: #eef1fc;
+    --success: #157a45;
+    --active-fill: #e3f5ea;
+    --active-ink: #0f6b39;
+    --stale: #8a5c1b;
+    --stale-wash: #f1eae1;
+    --danger: #b13327;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font: 14px/1.5 -apple-system, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 48px 32px 96px; }
+  header { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 8px; }
+  h1 { font-size: 24px; font-weight: 600; letter-spacing: -0.01em; margin: 0; }
+  .meta { color: var(--ink-muted); font-size: 14px; margin-top: 4px; }
+  .refresh {
+    background: var(--surface); border: 1px solid var(--line-strong); color: var(--ink);
+    font: inherit; font-weight: 500; font-size: 14px; padding: 8px 14px; border-radius: 6px;
+    cursor: pointer; transition: transform 100ms ease-out, border-color 100ms ease-out, color 100ms ease-out;
+  }
+  .refresh:hover { border-color: var(--accent); color: var(--accent-hover); }
+  .refresh:active { transform: scale(0.98); }
+  .refresh:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 24px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 10px; overflow: hidden; }
+  thead th {
+    text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--ink-muted); padding: 12px 16px; border-bottom: 1px solid var(--line-strong); background: #fbfbfc;
+  }
+  th.num, td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tbody tr { height: 48px; border-bottom: 1px solid var(--line); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr.stale { background: var(--stale-wash); }
+  td { padding: 0 16px; vertical-align: middle; }
+  .repo { font-weight: 500; }
+  .purpose { color: var(--ink-muted); font-size: 14px; }
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 100px;
+    letter-spacing: 0.02em;
+  }
+  .badge.active { color: var(--active-ink); background: var(--active-fill); }
+  .badge.dormant { color: var(--ink-muted); border: 1px solid var(--line-strong); }
+  .prod { font-size: 11px; color: var(--accent-hover); font-weight: 600; }
+  .edit {
+    font-size: 11px; color: var(--accent-hover); background: none; border: none; cursor: pointer; font-weight: 600;
+    padding: 4px 6px; border-radius: 4px; transition: background-color 100ms ease-out; letter-spacing: 0.02em;
+  }
+  .edit:hover { background: var(--accent-wash); }
+  .err { display: inline-flex; align-items: center; gap: 6px; color: var(--danger); font-size: 11px; font-weight: 600; letter-spacing: 0.02em; }
+  .err svg { flex: none; }
+  .stale-tag { color: var(--stale); font-size: 11px; font-weight: 600; margin-left: 6px; }
+  footer.note { margin-top: 16px; font-size: 11px; color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>GitHub Portfolio Status</h1>
+      <div class="meta">Fetched 2 minutes ago · 7 of 8 repos loaded</div>
+    </div>
+    <button class="refresh">Refresh</button>
+  </header>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Repository</th>
+        <th>Status</th>
+        <th>Production</th>
+        <th class="num">Open PRs</th>
+        <th class="num">Open Issues</th>
+        <th class="num">Last Activity</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><div class="repo">hermes-stack</div><div class="purpose">Core agent runtime</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td><span class="prod">PRODUCTION</span></td>
+        <td class="num">3</td>
+        <td class="num">12</td>
+        <td class="num">2h ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">chronicle</div><div class="purpose">SDLC pipeline tooling</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td>—</td>
+        <td class="num">1</td>
+        <td class="num">4</td>
+        <td class="num">1d ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr class="stale">
+        <td><div class="repo">ledger</div><div class="purpose">Accounting experiment</div></td>
+        <td><span class="badge dormant">Dormant</span><span class="stale-tag">STALE</span></td>
+        <td>—</td>
+        <td class="num">0</td>
+        <td class="num">0</td>
+        <td class="num">94d ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">trove</div><div class="purpose">Personal knowledge base</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td><span class="prod">PRODUCTION</span></td>
+        <td class="num">2</td>
+        <td class="num">7</td>
+        <td class="num">6h ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">projects-status</div><div class="purpose">This dashboard</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td>—</td>
+        <td class="num">1</td>
+        <td class="num">2</td>
+        <td class="num">3h ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr class="stale">
+        <td><div class="repo">omniroute</div><div class="purpose">Routing config service</div></td>
+        <td><span class="badge dormant">Dormant</span><span class="stale-tag">STALE</span></td>
+        <td><span class="prod">PRODUCTION</span></td>
+        <td class="num">0</td>
+        <td class="num">1</td>
+        <td class="num">61d ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr class="stale">
+        <td><div class="repo">weekend-experiment-42</div><div class="purpose">Spike, unused</div></td>
+        <td><span class="badge dormant">Dormant</span><span class="stale-tag">STALE</span></td>
+        <td>—</td>
+        <td class="num" colspan="3">
+          <span class="err">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            failed to load live data
+          </span>
+        </td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+      <tr>
+        <td><div class="repo">brain-vault-sync</div><div class="purpose">Notes sync tool</div></td>
+        <td><span class="badge active">Active</span></td>
+        <td>—</td>
+        <td class="num">4</td>
+        <td class="num">9</td>
+        <td class="num">30m ago</td>
+        <td><button class="edit">Edit</button></td>
+      </tr>
+    </tbody>
+  </table>
+  <footer class="note">Style: Impeccable — systematic, audit-grade craft (deterministic hierarchy, restrained accent, AA contrast). Revision 3, after /impeccable critique (18/32, P0/P1 fixed): stale wash raised to a verified-visible flat tint (was 5.5% alpha, functionally invisible), row dividers and frame line both strengthened, Active badges promoted to a filled tonal treatment so they visually outrank Dormant's outline instead of differing by hue alone, type scale consolidated to three deliberate steps (11 / 14 / 20px, all ≥1.25 ratio).</footer>
+</div>
+</body>
+</html>
