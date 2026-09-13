@@ -30,3 +30,9 @@ Preserve human-owned fields. This remains active until the signed webhook automa
 - Canonical CI-only Graphify configuration added.
 - Marker: `docs/graphify.json`.
 - Drift behavior: > 10% graph-size drift requires manual Stage 10 review. Missing artifacts fail CI.
+
+## Capability Gaps & Blocked Readiness
+- **GitHub Identity**: `gh-kilocode[bot]` identity is unavailable for the current Kilo agent. Blocked the 'Prove GH-KiloCode identity' capability and full operating flow test.
+- **OpenDesign**: Engine unavailable. UI design-track conditional stages 3A/4A are blocked. Style-lock missing.
+
+Full operating flow (Work Item 10) was halted due to missing GitHub identity and OpenDesign capability, complying with the "fail closed" readiness rules.
