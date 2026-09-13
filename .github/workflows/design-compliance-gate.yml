@@ -1,0 +1,21 @@
+name: design-compliance-gate
+on:
+  pull_request:
+    paths:
+      - 'app/**/*.tsx'
+      - 'components/**/*.tsx'
+      - 'styles/**/*.css'
+
+jobs:
+  design-review-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require independent design review PASS
+        run: |
+          echo "Design compliance review is required for UI file changes."
+          echo "Checking for Design Review Specialist PASS artifact..."
+          # Pseudo-check pending OpenDesign style-lock
+          if [ ! -f ".kilo/design-review-pass.json" ]; then
+             echo "::error::No design-compliance PASS artifact found. Independent Design review required."
+             exit 1
+          fi
